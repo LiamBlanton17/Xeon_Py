@@ -1,0 +1,152 @@
+---------------------------------------------------------------------------------------------
+------------------------------------------- TO DO -------------------------------------------
+---------------------------------------------------------------------------------------------
+Implement special moves : Castling, en passant
+Check if the king is in check
+Implement 3fold repetition, and 50move rule draws
+
+
+---------------------------------------------------------------------------------------------
+----------------------------------------- GAME FLOW -----------------------------------------
+---------------------------------------------------------------------------------------------
+Game Flow: Using a loop
+Given the mainBoard
+    Print the board
+    Get all the legal moves
+    Until legal moves
+        Take User Input
+    Update mainBoard
+    Continue;
+
+---------------------------------------------------------------------------------------------
+------------------------------------ SEARCHING ALGORITHM ------------------------------------
+---------------------------------------------------------------------------------------------
+Searching Flow
+
+Main Function
+Main(MainBoard, DEPTH, BoardHistory)
+    Get the first generation of children from the MainBoard, save to list of lists : 'firstChildren' (MOVE, childBoard)
+    For each 'fchild' in 'firstChildren'
+        fchild[1] = Search(fchild[1], DEPTH, BoardHistory, 0) #search returns a float, the evaluation of a board position
+    If its white's move
+        return the tuple from 'firstChildren' with the greatest eval : child[1]
+    Else
+        return the tuple from 'firstChildren' with the least eval : child[1]
+
+Search Function
+Search(Board, DEPTH, BoardHistory, ply)
+    If ply equals DEPTH
+        return Board.eval() #if you reach the desired search depth, return the eval of the board at that depth
+    Get the children from Board, save to list of Boards : 'children' [Board, ...]
+    For each 'child' in 'children'
+        child = search(child, DEPTH, BoardHistory, ply+1)
+        #THIS IS MOST LIKELY WHERE PRUNING WILL GO
+    #NOW WE HAVE A LIST OF EVALS, stored in 'children'
+    If its white's move
+        return the greatest eval in children
+    Else
+        return the least eval in children
+
+TO ADD: Pruning, not sure how to accomplish this
+
+NOTE: This above is the most crucial part to my AI
+AI is broken into 2 blocks :: Searching, Evaluation
+Searching relies on fast move generation, and pruning
+Evaluation relies on lots of logic, needs to be fast
+If move generation is too slow, IE too many for loops used to generate moves
+FOCUS ON MAKING CODE TIME AND RESOURCE EFFICIENT
+
+---------------------------------------------------------------------------------------------
+------------------------------------ OVERVIEW OF CLASSES ------------------------------------
+---------------------------------------------------------------------------------------------
+DATA Management
+A Board is a 2d list/array of piece objects :: board[Piece][Piece]
+Board History is a List of Boards :: List[board[Piece][Piece]
+A Piece is one of the subclasses of the Piece superclass
+A MOVE is a String, length 4, first let/num is starting row/col, second let/num is target row/col :: "[1-8][a-h][1-8][a-h]"
+
+MAP OF BOARD
+  0a 1b 2c 3d 4e 5f 6g 7h
+7 56 57 58 59 60 61 62 63
+6 48 49 50 51 52 53 54 55
+5 40 41 42 43 44 45 46 47
+4 32 33 34 35 36 37 38 39
+3 24 25 26 27 28 29 30 31
+2 16 17 18 19 20 21 22 23
+1 08 09 10 11 12 13 14 15
+0 00 01 02 03 04 05 06 07
+
+Classes/Files:
+    Main
+    Board
+    Piece
+        WKing
+        WQueen
+        WRook
+        WBishop
+        WKnight
+        WPawn
+        BKing
+        BQueen
+        BRook
+        BBishop
+        BKnight
+        BPawn
+        Empty
+    Xeon
+
+CLASS INFO
+Main - Main game loop, User input, Initial conditions
+    Attributes:
+        MainBoard - List of Pieces
+        boardHistory - List of Lists of Pieces (List of past boards)
+    Methods:
+
+Board - To store information of board positions
+    Attributes:
+        eval - Float
+        toMove - Int
+        board - List of Pieces
+        boardHistory - List of Lists of Pieces (List of past boards)
+        bKMoved - bool
+        wKMoved - bool
+    Methods:
+        Get/Set all Attributes
+        CalcEval() - Float
+        PrintBoard() - Console/Void
+        GenerateMoves() - List of Tuples (move, board[][])
+
+Piece - Super class to all the unique piece classes
+    Attributes:
+        value - float
+        piece - char (string of length 1)
+        boardHistory - List of Lists of Pieces (List of past boards)
+    Methods:
+        Get/Set all Attributes
+        GetMoves() - List of Tuples (move, board[][])
+
+Xeon - Chess AI
+    Attributes:
+    Method:
+
+---------------------------------------------------------------------------------------------
+------------------------------------- GENERATING MOVES --------------------------------------
+---------------------------------------------------------------------------------------------
+NOTES:
+- Checking if a king is in check will be done outside of the King class, in the Board class
+- Checking for 3fold repetition will be done in the Board class
+- Checking for 50 move rule will be done in the Board class
+- Checking for mate will be done in Board class
+
+KING
+    Loop i range(-1 -> 1)
+        Loop j range(-1 -> 1)
+            Target square is (row+i, col+i)
+            if Target has friendly piece OR if i and j are both 0 OR if Target doesn't exist
+                continue to next iteration
+            Add Target to list of moves
+    #DESIGN: A way to legally castle:
+        - King has not moved
+        - Target rook has not moved
+        - Not moving through check
+
