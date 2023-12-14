@@ -29,7 +29,7 @@ startingBoard = [[wRook(), wKnight(), wBishop(), wQueen(), wKing(), wBishop(), w
                  [bRook(), bKnight(), bBishop(), bQueen(), bKing(), bBishop(), bKnight(), bRook()]]
 
 #Create the main Board object
-mainBoard = Board(startingBoard)
+mainBoard = Board(startingBoard, 'white')
 
 #Board history list
 boardHistory = []
@@ -83,12 +83,12 @@ def takeUIn():
 
 
 #Loop
-mainBoard.PrintBoard()
-print(mainBoard.moves)
-print(len(mainBoard.moves))
+while True:
+    mainBoard.PrintBoard()
+    print(mainBoard.moves)
+    print(len(mainBoard.moves))
+    move = takeUIn()
+    mainBoard.updateBoard(move, boardHistory)
+    print(mainBoard.getEval())
 
-move = takeUIn()
-print(move)
-mainBoard.updateBoard(move, boardHistory)
-mainBoard.PrintBoard()
-boardHistory[0].PrintBoard()
+

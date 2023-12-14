@@ -13,7 +13,8 @@ class Board:
     material = 0  # Material on the board
 
     # Constructor
-    def __init__(self, board):
+    def __init__(self, board, turn):
+        self.turn = turn  # Who's turn is it
         self.board = board.copy()  # Setting the board of the object (2d array of pieces)
         self.moves = self.generateMoves()  # Generate moves from current board
 
@@ -29,8 +30,20 @@ class Board:
         print()
 
     # Method to get material of the board
+    def getMaterial(self):
+        val = 0
+        for row in range(8):
+            for col in range(8):
+                val += self.board[row][col].material
+        return val
 
     # Method to get evaluation of the board
+    def getEval(self):
+        val = 0
+        for row in range(8):
+            for col in range(8):
+                val += self.board[row][col].value
+        return val
 
     # Method to generate move, children board pairs
     def generateMoves(self):
@@ -38,6 +51,9 @@ class Board:
         #Loop over each piece in the board
         for row in range(8):
             for col in range(8):
+                #Make sure it is current players turn
+                if (self.turn == 'white' and self.board[row][col].material < 0) or (self.turn == 'black' and self.board[row][col].material > 0):
+                    continue
                 moves.extend(self.board[row][col].getMoves(self.board, row, col))
         #Remove moves resulting in check
         #Check for 3fold, check for 50move
@@ -62,3 +78,13 @@ class Board:
         #Make the move
         self.board[nRow][nCol] = self.board[sRow][sCol]
         self.board[sRow][sCol] = Empty()
+
+        #Set turn to opposite of current turn
+        if self.turn == 'white':
+            self.turn = 'black'
+        else:
+            self.turn = 'white'
+
+        #Clear all the moves, and generate the next moves
+        self.moves.clear()
+        self.moves = self.generateMoves()

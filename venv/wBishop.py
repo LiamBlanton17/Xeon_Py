@@ -35,7 +35,7 @@ class wBishop:
                 break
 
             #If at enemy piece, add move and break
-            if board[cRow+i][cCol+i].material < 0:
+            if board[cRow+i][cCol-i].material < 0:
                 target = cRow + cCol*10 + (cRow+i)*100 + (cCol-i)*1000
                 moves.append(target)
                 break
