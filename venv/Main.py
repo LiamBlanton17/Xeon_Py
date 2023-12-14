@@ -32,7 +32,7 @@ startingBoard = [[wRook(), wKnight(), wBishop(), wQueen(), wKing(), wBishop(), w
 mainBoard = Board(startingBoard)
 
 #Board history list
-boardHistory = [copy.deepcopy(mainBoard)]
+boardHistory = []
 
 #Userinput Items
 uInParse = {
@@ -88,5 +88,7 @@ print(mainBoard.moves)
 print(len(mainBoard.moves))
 
 move = takeUIn()
-
 print(move)
+mainBoard.updateBoard(move, boardHistory)
+mainBoard.PrintBoard()
+boardHistory[0].PrintBoard()

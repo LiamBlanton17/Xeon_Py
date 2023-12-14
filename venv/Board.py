@@ -1,6 +1,9 @@
 # Board Class
+import copy
 
 # Import all other classes
+import Empty
+from Empty import *
 
 # Class
 class Board:
@@ -42,4 +45,20 @@ class Board:
         return moves
 
     # Method to update the board
+    def updateBoard(self, move, bHistory):
 
+        #Add the previous board to board history
+        bHistory.append(copy.deepcopy(self))
+
+        #Parse out the move input
+        sRow = move % 10
+        move //= 10
+        sCol = move % 10
+        move //= 10
+        nRow = move % 10
+        move //= 10
+        nCol = move
+
+        #Make the move
+        self.board[nRow][nCol] = self.board[sRow][sCol]
+        self.board[sRow][sCol] = Empty()
