@@ -64,6 +64,12 @@ A Board is a 2d list/array of piece objects :: board[Piece][Piece]
 Board History is a List of Boards :: List[board[Piece][Piece]
 A Piece is one of the subclasses of the Piece superclass
 A MOVE is a String, length 4, first let/num is starting row/col, second let/num is target row/col :: "[1-8][a-h][1-8][a-h]"
+Special move codes:
+    8880 - White short castle
+    8881 - White long castle
+    9990 - Black short castle
+    9991 - Black long castle
+    9999 - Drawn game
 
 MAP OF BOARD
   0a 1b 2c 3d 4e 5f 6g 7h

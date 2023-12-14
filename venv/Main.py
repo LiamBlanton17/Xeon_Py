@@ -29,7 +29,7 @@ startingBoard = [[wRook(), wKnight(), wBishop(), wQueen(), wKing(), wBishop(), w
                  [bRook(), bKnight(), bBishop(), bQueen(), bKing(), bBishop(), bKnight(), bRook()]]
 
 #Create the main Board object
-mainBoard = Board(startingBoard, 'white')
+mainBoard = Board(startingBoard, 'white', '1111')
 
 #Board history list
 boardHistory = []
@@ -57,7 +57,25 @@ uInParse = {
 #Function contains a lof of messy conversions
 def takeUIn():
     #Get the move
-    uIn = list(input("Enter your move: "))
+    uIn = input("Enter your move: ")
+
+    #Check for special moves
+    if uIn == 'O-O':  # White, Short Castle
+        if mainBoard.moves.__contains__(8880):
+            return 8880
+    if uIn == 'O-O-O':  # White, Long Castle
+        if mainBoard.moves.__contains__(8881):
+            return 8881
+    if uIn == 'o-o':  # Black, Short Castle
+        if mainBoard.moves.__contains__(9990):
+            return 9990
+    if uIn == 'o-o-o':  # Black, Long Castle
+        if mainBoard.moves.__contains__(9991):
+            return 9991
+
+    #Convert input to a list
+    uIn = list(uIn)
+
     #Loop through and parse the move, check if the move is right length, and throw error if not a valid row/col
     for i in range(4):
         if len(uIn) != 4:
@@ -89,6 +107,4 @@ while True:
     print(len(mainBoard.moves))
     move = takeUIn()
     mainBoard.updateBoard(move, boardHistory)
-    print(mainBoard.getEval())
-
 
