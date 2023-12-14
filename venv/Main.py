@@ -1,4 +1,5 @@
 # Main Class
+import copy
 
 # Import all other classes
 import Board, wKing, wQueen, wRook, wBishop, wKnight, wPawn, bKing, bQueen, bRook, bBishop, bKnight, bPawn, Empty
@@ -29,6 +30,9 @@ startingBoard = [[wRook(), wKnight(), wBishop(), wQueen(), wKing(), wBishop(), w
 
 #Create the main Board object
 mainBoard = Board(startingBoard)
+
+#Board history list
+boardHistory = [copy.deepcopy(mainBoard)]
 
 #Userinput Items
 uInParse = {
@@ -76,6 +80,7 @@ def takeUIn():
         print("Enter a valid move")
         return takeUIn()
     return uIn
+
 
 #Loop
 mainBoard.PrintBoard()

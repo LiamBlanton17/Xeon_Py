@@ -14,9 +14,6 @@ class Board:
         self.board = board.copy()  # Setting the board of the object (2d array of pieces)
         self.moves = self.generateMoves()  # Generate moves from current board
 
-
-    # Methods
-
     # Method to print the board to the console
     # TO DO: Swap which way it prints depending on who's move it is
     def PrintBoard(self):
@@ -43,3 +40,6 @@ class Board:
         #Check for 3fold, check for 50move
         #Check for mate
         return moves
+
+    # Method to update the board
+
