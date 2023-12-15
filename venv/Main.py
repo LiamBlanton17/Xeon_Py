@@ -106,5 +106,5 @@ while True:
     print(mainBoard.moves)
     print(len(mainBoard.moves))
     move = takeUIn()
-    mainBoard.updateBoard(move, boardHistory)
+    mainBoard.updateBoard(move, boardHistory, True)
 

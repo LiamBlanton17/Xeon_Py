@@ -18,7 +18,8 @@ class Board:
         self.turn = turn  # Who's turn is it
         self.castlingRights = list(castlingRights)
         self.board = board.copy()  # Setting the board of the object (2d array of pieces)
-        self.moves = self.generateMoves(boardHistory, False)  # Generate moves from current board
+        self.boardHistory = boardHistory
+        self.moves = self.generateMoves(self.boardHistory, False, False)  # Generate moves from current board
 
     # Method to print the board to the console
     # TO DO: Swap which way it prints depending on who's move it is
@@ -48,7 +49,7 @@ class Board:
         return val
 
     # Method to generate move, children board pairs
-    def generateMoves(self, bHistory, killCastle):
+    def generateMoves(self, bHistory, killCastle, killCheck):
         moves = []
         #Loop over each piece in the board
         for row in range(8):
@@ -138,13 +139,21 @@ class Board:
                     if not moveThroughCheck:
                         moves.extend([9991])
 
-        #Remove moves resulting in check
+        #See if king is in check after a move, and prune it
+        if not killCheck:
+            pass
+
         #Check for 3fold, check for 50move
         #Check for mate
         return moves
 
+    # Method used in seeing if the king is in check, all it does is create a moves list variable
+    # This avoids recursion errors
+    def touchMoves(self):
+        self.moves = []
+
     # Method to update the board
-    def updateBoard(self, move, bHistory):
+    def updateBoard(self, move, bHistory, generateMoves):
 
         #Add the previous board to board history
         bHistory.append(copy.deepcopy(self))
@@ -208,4 +217,5 @@ class Board:
 
         #Clear all the moves, and generate the next moves
         self.moves.clear()
-        self.moves = self.generateMoves(bHistory, False)
+        if generateMoves:
+            self.moves = self.generateMoves(bHistory, False, False)

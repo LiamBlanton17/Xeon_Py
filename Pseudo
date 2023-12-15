@@ -1,7 +1,7 @@
 ---------------------------------------------------------------------------------------------
 ------------------------------------------- TO DO -------------------------------------------
 ---------------------------------------------------------------------------------------------
-Implement special moves : Castling, en passant
+Implement special moves : En passant
 Check if the king is in check
 Implement 3fold repetition, and 50move rule draws
 
@@ -156,3 +156,11 @@ KING
         - Target rook has not moved
         - Not moving through check
 
+
+# Making sure a move doesn't result in check
+- For each of the moves
+    - Create a copy of the board
+    - Update the board with the move
+    - Get a list of moves from that current board
+    - If the king is in check (determine by seeing if the king's square is under attack)
+       - Remove that move from the list of moves
