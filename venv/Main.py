@@ -28,11 +28,11 @@ startingBoard = [[wRook(), wKnight(), wBishop(), wQueen(), wKing(), wBishop(), w
                  [bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn()],
                  [bRook(), bKnight(), bBishop(), bQueen(), bKing(), bBishop(), bKnight(), bRook()]]
 
-#Create the main Board object
-mainBoard = Board(startingBoard, 'white', '1111')
-
 #Board history list
 boardHistory = []
+
+#Create the main Board object
+mainBoard = Board(startingBoard, 'white', '1111', boardHistory)
 
 #Userinput Items
 uInParse = {

@@ -14,11 +14,11 @@ class Board:
     castlingRights = 1111 #Castleing rights, WShort, WLong, BShort, BLong
 
     # Constructor
-    def __init__(self, board, turn, castlingRights):
+    def __init__(self, board, turn, castlingRights, boardHistory):
         self.turn = turn  # Who's turn is it
         self.castlingRights = list(castlingRights)
         self.board = board.copy()  # Setting the board of the object (2d array of pieces)
-        self.moves = self.generateMoves()  # Generate moves from current board
+        self.moves = self.generateMoves(boardHistory, False)  # Generate moves from current board
 
     # Method to print the board to the console
     # TO DO: Swap which way it prints depending on who's move it is
@@ -48,7 +48,7 @@ class Board:
         return val
 
     # Method to generate move, children board pairs
-    def generateMoves(self):
+    def generateMoves(self, bHistory, killCastle):
         moves = []
         #Loop over each piece in the board
         for row in range(8):
@@ -58,24 +58,85 @@ class Board:
                     continue
                 moves.extend(self.board[row][col].getMoves(self.board, row, col))
         #Check for castling
-        if self.turn == 'white':
-            #White short
-            if self.castlingRights[0] == '1' and self.board[0][5].material == 0 and self.board[0][6].material == 0:
-                #ADD A WAY TO SEE IF MOVING THROUGH CHECK
-                moves.extend([8880])
-            #White Long
-            if self.castlingRights[1] == '1' and self.board[0][3].material == 0 and self.board[0][2].material == 0 and self.board[0][1] == 0:
-                #ADD A WAY TO SEE IF MOVING THROUGH CHECK
-                moves.extend([8881])
-        if self.turn == 'black':
-            #Black short
-            if self.castlingRights[2] == '1' and self.board[7][5].material == 0 and self.board[7][6].material == 0:
-                #ADD A WAY TO SEE IF MOVING THROUGH CHECK
-                moves.extend([9990])
-            #Black Long
-            if self.castlingRights[3] == '1' and self.board[7][3].material == 0 and self.board[7][2].material == 0 and self.board[7][1] == 0:
-                #ADD A WAY TO SEE IF MOVING THROUGH CHECK
-                moves.extend([9991])
+        if not killCastle:
+            if self.turn == 'white':
+                #White short
+                if self.castlingRights[0] == '1' and self.board[0][5].material == 0 and self.board[0][6].material == 0:
+                    #Below should check to see if the king is in or moving through check
+                    testB = copy.deepcopy(self)  # Create a copy of the current board
+                    testB.turn = 'black'  # Set this copy to the opponent
+                    opponentMoves = testB.generateMoves(bHistory, True)  # See where opponents pieces can move it
+                    #Loop through and parse out the moves to only get the target square
+                    i = 0
+                    for move in opponentMoves:
+                        move //= 100
+                        opponentMoves[i] = move
+                        i += 1
+                    #Determine if the king will move through check
+                    moveThroughCheck = False
+                    for move in opponentMoves:
+                        if move == 40 or move == 50 or move == 60:
+                            moveThroughCheck = True
+                    if not moveThroughCheck:
+                        moves.extend([8880])
+                #White Long
+                if self.castlingRights[1] == '1' and self.board[0][3].material == 0 and self.board[0][2].material == 0 and self.board[0][1] == 0:
+                    #Below should check to see if the king is in or moving through check
+                    testB = copy.deepcopy(self)  # Create a copy of the current board
+                    testB.turn = 'black'  # Set this copy to the opponent
+                    opponentMoves = testB.generateMoves(bHistory, True)  # See where opponents pieces can move it
+                    #Loop through and parse out the moves to only get the target square
+                    i = 0
+                    for move in opponentMoves:
+                        move //= 100
+                        opponentMoves[i] = move
+                        i += 1
+                    #Determine if the king will move through check
+                    moveThroughCheck = False
+                    for move in opponentMoves:
+                        if move == 40 or move == 30 or move == 20:
+                            moveThroughCheck = True
+                    if not moveThroughCheck:
+                        moves.extend([8881])
+            if self.turn == 'black':
+                #Black short
+                if self.castlingRights[2] == '1' and self.board[7][5].material == 0 and self.board[7][6].material == 0:
+                    #Below should check to see if the king is in or moving through check
+                    testB = copy.deepcopy(self)  # Create a copy of the current board
+                    testB.turn = 'white'  # Set this copy to the opponent
+                    opponentMoves = testB.generateMoves(bHistory, True)  # See where opponents pieces can move it
+                    #Loop through and parse out the moves to only get the target square
+                    i = 0
+                    for move in opponentMoves:
+                        move //= 100
+                        opponentMoves[i] = move
+                        i += 1
+                    #Determine if the king will move through check
+                    moveThroughCheck = False
+                    for move in opponentMoves:
+                        if move == 47 or move == 57 or move == 67:
+                            moveThroughCheck = True
+                    if not moveThroughCheck:
+                        moves.extend([9990])
+                #Black Long
+                if self.castlingRights[3] == '1' and self.board[7][3].material == 0 and self.board[7][2].material == 0 and self.board[7][1] == 0:
+                    #Below should check to see if the king is in or moving through check
+                    testB = copy.deepcopy(self)  # Create a copy of the current board
+                    testB.turn = 'white'  # Set this copy to the opponent
+                    opponentMoves = testB.generateMoves(bHistory, True)  # See where opponents pieces can move it
+                    #Loop through and parse out the moves to only get the target square
+                    i = 0
+                    for move in opponentMoves:
+                        move //= 100
+                        opponentMoves[i] = move
+                        i += 1
+                    #Determine if the king will move through check
+                    moveThroughCheck = False
+                    for move in opponentMoves:
+                        if move == 47 or move == 37 or move == 27:
+                            moveThroughCheck = True
+                    if not moveThroughCheck:
+                        moves.extend([9991])
 
         #Remove moves resulting in check
         #Check for 3fold, check for 50move
@@ -137,14 +198,14 @@ class Board:
         if self.board[0][7].char != 'R':
             self.castlingRights[0] = 0
         if self.board[7][4].char != 'k':
-            self.castlingRights[0] = 0
-            self.castlingRights[1] = 0
+            self.castlingRights[2] = 0
+            self.castlingRights[3] = 0
         if self.board[7][0].char != 'r':
-            self.castlingRights[1] = 0
+            self.castlingRights[3] = 0
         if self.board[7][7].char != 'r':
-            self.castlingRights[0] = 0
+            self.castlingRights[2] = 0
 
 
         #Clear all the moves, and generate the next moves
         self.moves.clear()
-        self.moves = self.generateMoves()
+        self.moves = self.generateMoves(bHistory, False)
