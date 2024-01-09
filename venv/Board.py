@@ -51,9 +51,16 @@ class Board:
     # Method to generate move, children board pairs
     def generateMoves(self, bHistory, killCastle, killCheck):
         moves = []
+        wKPos = 0
+        bKPos = 0
         #Loop over each piece in the board
         for row in range(8):
             for col in range(8):
+                #Find the kings
+                if self.board[row][col].char == 'K':
+                    wKPos = row + col*10
+                if self.board[row][col].char == 'k':
+                    bKPos = row + col*10
                 #Make sure it is current players turn
                 if (self.turn == 'white' and self.board[row][col].material < 0) or (self.turn == 'black' and self.board[row][col].material > 0):
                     continue
@@ -141,11 +148,32 @@ class Board:
 
         #See if king is in check after a move, and prune it
         if not killCheck:
-            pass
-
+            testB = copy.deepcopy(self)
+            for move in moves:
+                testB.touchMoves()
+                testB.updateBoard(move, bHistory, False)
+                # moves[moves.index(move)] = testB.checkForCheck(bHistory, wKPos, bKPos, move)
+                testB.board = copy.deepcopy(self.board)
         #Check for 3fold, check for 50move
         #Check for mate
         return moves
+
+    # Method used to see if the king is in check
+    # NEEDS WORK
+    def checkForCheck(self, bHistory, wkp, bkp, ogMove):
+        self.moves = self.generateMoves(bHistory, True, True)
+        if self.turn == "white":
+            kingPos = wkp
+        else:
+            kingPos = bkp
+        for move in self.moves:
+            if move // 100 == kingPos:
+                print("Recongized king is in check")
+                return 0
+
+        return ogMove
+
+
 
     # Method used in seeing if the king is in check, all it does is create a moves list variable
     # This avoids recursion errors
@@ -156,7 +184,8 @@ class Board:
     def updateBoard(self, move, bHistory, generateMoves):
 
         #Add the previous board to board history
-        bHistory.append(copy.deepcopy(self))
+        if generateMoves:
+            bHistory.append(copy.deepcopy(self))
 
         #If it's a special move
         if move == 8880:  # White, Short Castle
@@ -213,7 +242,6 @@ class Board:
             self.castlingRights[3] = 0
         if self.board[7][7].char != 'r':
             self.castlingRights[2] = 0
-
 
         #Clear all the moves, and generate the next moves
         self.moves.clear()

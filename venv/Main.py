@@ -27,12 +27,20 @@ startingBoard = [[wRook(), wKnight(), wBishop(), wQueen(), wKing(), wBishop(), w
                  [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
                  [bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn()],
                  [bRook(), bKnight(), bBishop(), bQueen(), bKing(), bBishop(), bKnight(), bRook()]]
+testingBoard = [[wRook(), wKnight(), wBishop(), wQueen(), wKing(), wBishop(), wKnight(), wRook()],
+                [wPawn(), wPawn(), wPawn(), wPawn(), wPawn(), wPawn(), wPawn(), wPawn()],
+                [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
+                [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
+                [Empty(), Empty(), Empty(), bKing(), bPawn(), Empty(), Empty(), Empty()],
+                [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
+                [bPawn(), bPawn(), bPawn(), bPawn(), Empty(), bPawn(), bPawn(), bPawn()],
+                [bRook(), bKnight(), bBishop(), bQueen(), Empty(), bBishop(), bKnight(), bRook()]]
 
 #Board history list
 boardHistory = []
 
 #Create the main Board object
-mainBoard = Board(startingBoard, 'white', '1111', boardHistory)
+mainBoard = Board(testingBoard, 'white', '1111', boardHistory)
 
 #Userinput Items
 uInParse = {
