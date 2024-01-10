@@ -152,20 +152,27 @@ class Board:
             for move in moves:
                 testB.touchMoves()
                 testB.updateBoard(move, bHistory, False)
-                # moves[moves.index(move)] = testB.checkForCheck(bHistory, wKPos, bKPos, move)
+                moves[moves.index(move)] = testB.checkForCheck(bHistory, wKPos, bKPos, move)
+                testB.PrintBoard()
                 testB.board = copy.deepcopy(self.board)
+                testB.turn = copy.deepcopy(self.turn)
+
         #Check for 3fold, check for 50move
         #Check for mate
+
+        #List compression, remove all the 0s
+        moves = [i for i in moves if i != 0]
         return moves
 
     # Method used to see if the king is in check
     # NEEDS WORK
     def checkForCheck(self, bHistory, wkp, bkp, ogMove):
-        self.moves = self.generateMoves(bHistory, True, True)
         if self.turn == "white":
-            kingPos = wkp
-        else:
             kingPos = bkp
+        else:
+            kingPos = wkp
+        self.moves = self.generateMoves(bHistory, True, True)
+        print(kingPos)
         for move in self.moves:
             if move // 100 == kingPos:
                 print("Recongized king is in check")
