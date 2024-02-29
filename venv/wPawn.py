@@ -36,8 +36,23 @@ class wPawn:
             target = cRow + cCol*10 + (cRow+1)*100 + (cCol-1)*1000
             moves.append(target)
 
-        #Create Enpassant
-
-        #CREATE PROMOTION
-
         return moves
+
+    #Enpassent (same code in moves as a normal move)
+    def enpassent(self, board, cRow, cCol, bHistory):
+        #Skip if this is the first move of the game (to avoid index exceptions)
+        if len(bHistory) == 0:
+            return []
+        #Check if a pawn of the opposite color is beside you to the left
+        if cCol-1 >= 0 and cRow == 4:
+            if board[cRow][cCol-1].material == -1 and board[cRow+2][cCol-1].material == 0:
+                #Check if there was a pawn on the 2nd row
+                if bHistory[len(bHistory)-1].GetBoard()[cRow+2][cCol-1].material == -1:
+                    return [cRow + cCol*10 + (cRow+1)*100 + (cCol-1)*1000]
+        #Check if a pawn of the opposite color is beside you to the left
+        if cCol+1 <= 7 and cRow == 4:
+            if board[cRow][cCol+1].material == -1 and board[cRow+2][cCol+1].material == 0:
+                #Check if there was a pawn on the 2nd row
+                if bHistory[len(bHistory)-1].GetBoard()[cRow+2][cCol+1].material == -1:
+                    return [cRow + cCol*10 + (cRow+1)*100 + (cCol+1)*1000]
+        return []

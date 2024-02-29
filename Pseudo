@@ -1,9 +1,9 @@
 ---------------------------------------------------------------------------------------------
 ------------------------------------------- TO DO -------------------------------------------
 ---------------------------------------------------------------------------------------------
-Implement special moves : En passant
-Check if the king is in check *** THIS IS IN PROGRESS
-Implement 3fold repetition, and 50move rule draws
+Implement promotion - should be working
+!!!!! Check if the king is in check - kinda works (kinda doesnt at all)
+Implement 50move rule draws (probably works, not gonna test it)
 
 
 ---------------------------------------------------------------------------------------------

@@ -27,14 +27,14 @@ startingBoard = [[wRook(), wKnight(), wBishop(), wQueen(), wKing(), wBishop(), w
                  [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
                  [bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn()],
                  [bRook(), bKnight(), bBishop(), bQueen(), bKing(), bBishop(), bKnight(), bRook()]]
-testingBoard = [[wRook(), wKnight(), wBishop(), wQueen(), wKing(), wBishop(), wKnight(), wRook()],
-                [wPawn(), wPawn(), wPawn(), wPawn(), wPawn(), wPawn(), wPawn(), wPawn()],
+testingBoard = [[Empty(), wKing(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
+                [Empty(), Empty(), Empty(), wPawn(), Empty(), Empty(), Empty(), Empty()],
+                [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
+                [Empty(), Empty(), Empty(), Empty(), bPawn(), Empty(), Empty(), Empty()],
                 [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
                 [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
-                [Empty(), Empty(), Empty(), bKing(), bPawn(), Empty(), Empty(), Empty()],
                 [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
-                [bPawn(), bPawn(), bPawn(), bPawn(), Empty(), bPawn(), bPawn(), bPawn()],
-                [bRook(), bKnight(), bBishop(), bQueen(), Empty(), bBishop(), bKnight(), bRook()]]
+                [Empty(), Empty(), bKing(), Empty(), Empty(), Empty(), Empty(), Empty()]]
 
 #Board history list
 boardHistory = []
@@ -66,8 +66,6 @@ uInParse = {
 def takeUIn():
     #Get the move
     uIn = input("Enter your move: ")
-
-    #Check for special moves
     if uIn == 'O-O':  # White, Short Castle
         if mainBoard.moves.__contains__(8880):
             return 8880
@@ -109,10 +107,16 @@ def takeUIn():
 
 
 #Loop
-while True:
+while (500 > mainBoard.eval > -500) and len(mainBoard.moves) > 0:
+    print("MAIN BOARD ------------------- ")
     mainBoard.PrintBoard()
+    print(mainBoard.getEval())
+    print("MAIN BOARD ------------------- ")
     print(mainBoard.moves)
     print(len(mainBoard.moves))
     move = takeUIn()
     mainBoard.updateBoard(move, boardHistory, True)
+
+print("GG")
+
 
