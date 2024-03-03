@@ -15,6 +15,7 @@ from bBishop import *
 from bKnight import *
 from bPawn import *
 from Empty import *
+from Hash import *
 
 # Class
 class Board:
@@ -23,16 +24,17 @@ class Board:
     fiftyMoves = 0  # 50 move counter
     eval = 0  # Evaluation of board
     material = 0  # Material on the board
-    castlingRights = 1111  # Castleing rights, WShort, WLong, BShort, BLong
+    castlingRights = 1111  # Castling rights, WShort, WLong, BShort, BLong
 
     # Constructor
-    def __init__(self, board, turn, castlingRights, boardHistory):
+    def __init__(self, board, turn, castlingRights, boardHistory, genMoves):
         self.turn = turn  # Who's turn is it
         self.castlingRights = list(castlingRights)
         self.board = board.copy()  # Setting the board of the object (2d array of pieces)
         self.boardHistory = boardHistory
         self.touchMoves()
-        self.moves = self.generateMoves(self.boardHistory, False, False)  # Generate moves from current board
+        if genMoves:
+            self.moves = self.generateMoves(self.boardHistory, False, False)  # Generate moves from current board
 
     # Method to get the board
     def GetBoard(self):
@@ -73,25 +75,22 @@ class Board:
         #Loop over each piece in the board
         for row in range(8):
             for col in range(8):
-                #Find the kings
-                if self.board[row][col].char == 'K':
-                    wKPos = row + col*10
-                if self.board[row][col].char == 'k':
-                    bKPos = row + col*10
                 #Make sure it is current players turn
                 if (self.turn == 'white' and self.board[row][col].material < 0) or (self.turn == 'black' and self.board[row][col].material > 0):
                     continue
                 moves.extend(self.board[row][col].getMoves(self.board, row, col))
                 #Pawn Enpassant
-                if self.board[row][col].char == 'P' or self.board[row][col].char == 'p':
-                    moves.extend(self.board[row][col].enpassent(self.board, row, col, bHistory))
+                if (self.board[row][col].char == 'P' or self.board[row][col].char == 'p') and len(bHistory) > 0:
+                    moves.extend(self.board[row][col].enpassent(self.board, row, col, len(bHistory), DeHashBoard(bHistory[len(bHistory)-1], bHistory)))
+        # Create a testB with deep copys of the original board position
+        testB = Board(copy.deepcopy(self.board), copy.deepcopy(self.turn), copy.deepcopy(self.castlingRights), bHistory, False)
         #Check for castling
         if not killCastle:
             if self.turn == 'white':
                 #White short
                 if self.castlingRights[0] == '1' and self.board[0][5].material == 0 and self.board[0][6].material == 0:
                     #Below should check to see if the king is in or moving through check
-                    testB = copy.deepcopy(self)  # Create a copy of the current board
+                    # testB = copy.deepcopy(self)  # Create a copy of the current board
                     testB.turn = 'black'  # Set this copy to the opponent
                     opponentMoves = testB.generateMoves(bHistory, True, True)  # See where opponents pieces can move it
                     #Loop through and parse out the moves to only get the target square
@@ -107,11 +106,10 @@ class Board:
                             moveThroughCheck = True
                     if not moveThroughCheck:
                         moves.extend([8880])
-                    del testB
                 #White Long
                 if self.castlingRights[1] == '1' and self.board[0][3].material == 0 and self.board[0][2].material == 0 and self.board[0][1] == 0:
                     #Below should check to see if the king is in or moving through check
-                    testB = copy.deepcopy(self)  # Create a copy of the current board
+                    testB.board = copy.deepcopy(self.board)  # Create a copy of the current board
                     testB.turn = 'black'  # Set this copy to the opponent
                     opponentMoves = testB.generateMoves(bHistory, True, True)  # See where opponents pieces can move it
                     #Loop through and parse out the moves to only get the target square
@@ -127,12 +125,11 @@ class Board:
                             moveThroughCheck = True
                     if not moveThroughCheck:
                         moves.extend([8881])
-                        del testB
             if self.turn == 'black':
                 #Black short
                 if self.castlingRights[2] == '1' and self.board[7][5].material == 0 and self.board[7][6].material == 0:
                     #Below should check to see if the king is in or moving through check
-                    testB = copy.deepcopy(self)  # Create a copy of the current board
+                    testB.board = copy.deepcopy(self.board)  # Create a copy of the current board
                     testB.turn = 'white'  # Set this copy to the opponent
                     opponentMoves = testB.generateMoves(bHistory, True, True)  # See where opponents pieces can move it
                     #Loop through and parse out the moves to only get the target square
@@ -148,11 +145,10 @@ class Board:
                             moveThroughCheck = True
                     if not moveThroughCheck:
                         moves.extend([9990])
-                    del testB
                 #Black Long
                 if self.castlingRights[3] == '1' and self.board[7][3].material == 0 and self.board[7][2].material == 0 and self.board[7][1] == 0:
                     #Below should check to see if the king is in or moving through check
-                    testB = copy.deepcopy(self)  # Create a copy of the current board
+                    testB.board = copy.deepcopy(self.board)  # Create a copy of the current board
                     testB.turn = 'white'  # Set this copy to the opponent
                     opponentMoves = testB.generateMoves(bHistory, True, True)  # See where opponents pieces can move it
                     #Loop through and parse out the moves to only get the target square
@@ -168,17 +164,13 @@ class Board:
                             moveThroughCheck = True
                     if not moveThroughCheck:
                         moves.extend([9991])
-                    del testB
-
         #See if king is in check after a move, and prune it
-        #if not killCheck:
+        if not killCheck:
             # Loop through the current moves, create a new board object for each
-         #   i = 0
-          #  for move in moves:
-           #     moves[i] = self.isKingInCheck(move, bHistory)
-            #    i += 1
-
-        #Check for 3fold, check for 50move
+            i = 0
+            for move in moves:
+                moves[i] = self.isKingInCheck(move, bHistory)
+                i += 1
 
         #List compression, remove all the 0s
         moves = [i for i in moves if i != 0]
@@ -186,7 +178,7 @@ class Board:
 
     # Check if the king is in check
     def isKingInCheck(self, move, bHistory):
-        testB = copy.deepcopy(self)
+        testB = Board(copy.deepcopy(self.board), copy.deepcopy(self.turn), copy.deepcopy(self.castlingRights), bHistory, False)
         testB.updateBoard(move, bHistory, False)
         nextMoves = testB.generateMoves(bHistory, True, True)
         holdTestB = copy.deepcopy(testB)
@@ -196,8 +188,6 @@ class Board:
             # testB.PrintBoard()
             if not (500 > testB.getEval() > -500):
                 return 0
-            del testB
-        del holdTestB
         return move
 
     # Method used in seeing if the king is in check, all it does is create a moves list variable
@@ -207,10 +197,9 @@ class Board:
 
     # Method to update the board
     def updateBoard(self, move, bHistory, generateMoves):
-
         #Add the previous board to board history
         if generateMoves:
-            bHistory.append(copy.deepcopy(self))
+            bHistory.append(HashBoard(self))
 
         #Get the current material
         currentMaterial = self.getMaterial()
@@ -303,8 +292,7 @@ class Board:
         if len(bHistory) > 3:
             matches = 1
             for i in range(len(bHistory)):
-                matches += Board.CompareBoards(bHistory[i].GetBoard(), self.board)
-            print("matches: ", matches)
+                matches += Board.CompareBoards(DeHashBoard(bHistory[i], bHistory), self.board)
             if matches == 3:
                 self.moves.clear()
 
@@ -330,16 +318,16 @@ class Board:
                 if piece == "r":
                     self.board[nRow][nCol] = bRook()
                 if piece == "b":
-                    self.board[nRow][nCol] = bRook()
+                    self.board[nRow][nCol] = bBishop()
                 if piece == "n":
-                    self.board[nRow][nCol] = bRook()
+                    self.board[nRow][nCol] = bKnight()
                 break
-
         # Increment 50 moves
         self.fiftyMoves += 1
 
     # White promotion
     def wPromote(self):
+        return "Q"  # Temp fix to auto promote to a queen
         uIn = input("[WHITE] Pawn Promotion (Q, R, B, N): ")
         if uIn == "Q" or uIn == "R" or uIn == "B" or uIn == "N":
             return uIn
@@ -348,6 +336,7 @@ class Board:
 
     # Black promotion
     def bPromote(self):
+        return "q"  # Temp fix to auto promote to a queen
         uIn = input("[BLACK] Pawn Promotion (q, r, b, n): ")
         if uIn == "q" or uIn == "r" or uIn == "b" or uIn == "n":
             return uIn

@@ -11,6 +11,10 @@ class wKnight:
     def __init__(self):
         pass
 
+    #Return the pieces character
+    def GetChar(self):
+        return self.char
+
     #Get Moves method
     def getMoves(self, board, cRow, cCol):
         moves = []

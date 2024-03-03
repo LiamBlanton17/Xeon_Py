@@ -11,6 +11,10 @@ class Empty:
     def __init__(self):
         pass
 
+    #Return the pieces character
+    def GetChar(self):
+        return self.char
+
     #Empty function for get moves
     def getMoves(self, board, cRow, cCol):
         return []

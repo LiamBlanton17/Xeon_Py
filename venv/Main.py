@@ -1,5 +1,6 @@
 # Main Class
 import copy
+import sys
 
 # Import all other classes
 import Board, wKing, wQueen, wRook, wBishop, wKnight, wPawn, bKing, bQueen, bRook, bBishop, bKnight, bPawn, Empty
@@ -28,10 +29,10 @@ startingBoard = [[wRook(), wKnight(), wBishop(), wQueen(), wKing(), wBishop(), w
                  [bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn()],
                  [bRook(), bKnight(), bBishop(), bQueen(), bKing(), bBishop(), bKnight(), bRook()]]
 testingBoard = [[Empty(), wKing(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
-                [Empty(), Empty(), Empty(), wPawn(), Empty(), Empty(), Empty(), Empty()],
+                [Empty(), Empty(), wPawn(), wPawn(), Empty(), Empty(), Empty(), Empty()],
                 [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
                 [Empty(), Empty(), Empty(), Empty(), bPawn(), Empty(), Empty(), Empty()],
-                [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
+                [Empty(), Empty(), Empty(), bPawn(), Empty(), Empty(), Empty(), Empty()],
                 [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
                 [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
                 [Empty(), Empty(), bKing(), Empty(), Empty(), Empty(), Empty(), Empty()]]
@@ -40,7 +41,7 @@ testingBoard = [[Empty(), wKing(), Empty(), Empty(), Empty(), Empty(), Empty(), 
 boardHistory = []
 
 #Create the main Board object
-mainBoard = Board(testingBoard, 'white', '1111', boardHistory)
+mainBoard = Board(startingBoard, 'white', '1111', boardHistory, True)
 
 #Userinput Items
 uInParse = {
@@ -66,6 +67,9 @@ uInParse = {
 def takeUIn():
     #Get the move
     uIn = input("Enter your move: ")
+    # Code BREAK draws the game, debugging code
+    if uIn == 'BREAK':
+        return 9999
     if uIn == 'O-O':  # White, Short Castle
         if mainBoard.moves.__contains__(8880):
             return 8880
@@ -104,9 +108,10 @@ def takeUIn():
         print("Enter a valid move")
         return takeUIn()
     return uIn
+from pympler.tracker import SummaryTracker
+tracker = SummaryTracker()
 
-
-#Loop
+# Loop
 while (500 > mainBoard.eval > -500) and len(mainBoard.moves) > 0:
     print("MAIN BOARD ------------------- ")
     mainBoard.PrintBoard()
@@ -115,8 +120,12 @@ while (500 > mainBoard.eval > -500) and len(mainBoard.moves) > 0:
     print(mainBoard.moves)
     print(len(mainBoard.moves))
     move = takeUIn()
+    if move == 9999:  # Debugging statement, code 9999 to draw game
+        break
     mainBoard.updateBoard(move, boardHistory, True)
+    # boardHistory.clear()  # Clear board history, temp fix to optimization issues
 
 print("GG")
+tracker.print_diff()
 
 
