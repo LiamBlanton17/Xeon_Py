@@ -43,12 +43,20 @@ class Board:
     # Method to print the board to the console
     # TO DO: Swap which way it prints depending on who's move it is
     def PrintBoard(self):
-        for row in range(7, -1, -1):
-            print(row+1, end=" ")
-            for col in range(8):
-                print(self.board[row][col].char, end=" ")
-            print()
-        print("  A B C D E F G H")
+        if self.turn == 'white':
+            for row in range(7, -1, -1):
+                print(row+1, end=" ")
+                for col in range(8):
+                    print(self.board[row][col].char, end=" ")
+                print()
+            print("  A B C D E F G H")
+        else:
+            for row in range(8):
+                print(row+1, end=" ")
+                for col in range(8):
+                    print(self.board[row][col].char, end=" ")
+                print()
+            print("  A B C D E F G H")
         print()
 
     # Method to get material of the board
