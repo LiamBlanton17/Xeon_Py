@@ -11,9 +11,81 @@ class wPawn:
     def __init__(self):
         pass
 
+    #Piece-Square map multiplier (used in isolated evaluation of pieces)
+    PSM = {
+        0: 0,
+        1: 0,
+        2: 0,
+        3: 0,
+        4: 0,
+        5: 0,
+        6: 0,
+        7: 0,
+        8: 1,
+        9: 1,
+        10: 1,
+        11: 1,
+        12: 1,
+        13: 1,
+        14: 1,
+        15: 1,
+        16: 1.05,
+        17: 1.05,
+        18: 1.05,
+        19: 1.05,
+        20: 1.05,
+        21: 0.95,
+        22: 1,
+        23: 1.05,
+        24: 1,
+        25: 1,
+        26: 1.05,
+        27: 1.1,
+        28: 1.1,
+        29: 0.95,
+        30: 0.95,
+        31: 0.95,
+        32: 1,
+        33: 1,
+        34: 1.1,
+        35: 1.15,
+        36: 1.15,
+        37: 1,
+        38: 1,
+        39: 1,
+        40: 1.05,
+        41: 1.05,
+        42: 1.12,
+        43: 1.17,
+        44: 1.17,
+        45: 1.05,
+        46: 1.05,
+        47: 1.05,
+        48: 1.07,
+        49: 1.07,
+        50: 1.15,
+        51: 1.2,
+        52: 1.2,
+        53: 1.07,
+        54: 1.07,
+        55: 1.07,
+        56: 5,
+        57: 5,
+        58: 5,
+        59: 5,
+        60: 5,
+        61: 5,
+        62: 5,
+        63: 5
+    }
+
     #Return the pieces character
     def GetChar(self):
         return self.char
+
+    #Method to get an isolated eval of this piece
+    def getEval(self, row, col):
+        return self.PSM[(row*8)+col]
 
     #Get Moves method
     def getMoves(self, board, cRow, cCol):

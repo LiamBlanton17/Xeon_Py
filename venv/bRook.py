@@ -11,9 +11,81 @@ class bRook:
     def __init__(self):
         pass
 
+    #Piece-Square map multiplier (used in isolated evaluation of pieces)
+    PSM = {
+        0: -5,
+        1: -5,
+        2: -5,
+        3: -5,
+        4: -5,
+        5: -5,
+        6: -5,
+        7: -5,
+        8: -5.05,
+        9: -5.05,
+        10: -5.05,
+        11: -5.05,
+        12: -5.05,
+        13: -5.05,
+        14: -5.05,
+        15: -5.05,
+        16: -4.9,
+        17: -4.9,
+        18: -4.9,
+        19: -4.9,
+        20: -4.9,
+        21: -4.9,
+        22: -4.9,
+        23: -4.9,
+        24: -4.9,
+        25: -4.9,
+        26: -4.9,
+        27: -4.9,
+        28: -4.9,
+        29: -4.9,
+        30: -4.9,
+        31: -4.9,
+        32: -4.9,
+        33: -4.9,
+        34: -4.9,
+        35: -4.9,
+        36: -4.9,
+        37: -4.9,
+        38: -4.9,
+        39: -4.9,
+        40: -4.9,
+        41: -4.9,
+        42: -4.9,
+        43: -4.9,
+        44: -4.9,
+        45: -4.9,
+        46: -4.9,
+        47: -4.9,
+        48: -5,
+        49: -5,
+        50: -5,
+        51: -5,
+        52: -5,
+        53: -5,
+        54: -5,
+        55: -5,
+        56: -5.05,
+        57: -5.05,
+        58: -5.10,
+        59: -5.15,
+        60: -5.15,
+        61: -5.10,
+        62: -5.05,
+        63: -5.05
+    }
+
     #Return the pieces character
     def GetChar(self):
         return self.char
+
+    #Method to get an isolated eval of this piece
+    def getEval(self, row, col):
+        return self.PSM[(row*8)+col]
 
     #Method to get all moves by the piece
     def getMoves(self, board, cRow, cCol):

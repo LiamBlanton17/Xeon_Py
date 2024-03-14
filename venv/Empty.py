@@ -15,6 +15,10 @@ class Empty:
     def GetChar(self):
         return self.char
 
+    #Method to get an isolated eval of this piece
+    def getEval(self, row, col):
+        return 0
+
     #Empty function for get moves
     def getMoves(self, board, cRow, cCol):
         return []

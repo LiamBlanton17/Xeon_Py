@@ -11,9 +11,81 @@ class wKnight:
     def __init__(self):
         pass
 
+    #Piece-Square map multiplier (used in isolated evaluation of pieces)
+    PSM = {
+        0: 2.5,
+        1: 2.75,
+        2: 2.75,
+        3: 2.75,
+        4: 2.75,
+        5: 2.75,
+        6: 2.75,
+        7: 2.5,
+        8: 2.5,
+        9: 2.75,
+        10: 2.95,
+        11: 2.95,
+        12: 2.95,
+        13: 2.95,
+        14: 2.75,
+        15: 2.5,
+        16: 2.5,
+        17: 2.95,
+        18: 3.2,
+        19: 3.15,
+        20: 3.15,
+        21: 3.2,
+        22: 2.95,
+        23: 2.5,
+        24: 2.75,
+        25: 3,
+        26: 3.2,
+        27: 3.2,
+        28: 3.2,
+        29: 3.2,
+        30: 3,
+        31: 2.75,
+        32: 2.75,
+        33: 3.1,
+        34: 3.25,
+        35: 3.3,
+        36: 3.3,
+        37: 3.25,
+        38: 3.1,
+        39: 2.75,
+        40: 2.5,
+        41: 3,
+        42: 3.2,
+        43: 3.2,
+        44: 3.2,
+        45: 3.2,
+        46: 3,
+        47: 2.5,
+        48: 2.5,
+        49: 2.75,
+        50: 2.95,
+        51: 2.95,
+        52: 2.95,
+        53: 2.95,
+        54: 2.75,
+        55: 2.5,
+        56: 2.5,
+        57: 2.75,
+        58: 2.95,
+        59: 2.95,
+        60: 2.95,
+        61: 2.95,
+        62: 2.75,
+        63: 2.5
+    }
+
     #Return the pieces character
     def GetChar(self):
         return self.char
+
+    #Method to get an isolated eval of this piece
+    def getEval(self, row, col):
+        return self.PSM[(row*8)+col]
 
     #Get Moves method
     def getMoves(self, board, cRow, cCol):

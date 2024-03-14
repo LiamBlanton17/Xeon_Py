@@ -11,9 +11,81 @@ class bQueen:
     def __init__(self):
         pass
 
+    #Piece-Square map multiplier (used in isolated evaluation of pieces)
+    PSM = {
+        0: -8.75,
+        1: -9,
+        2: -9,
+        3: -9,
+        4: -9,
+        5: -9,
+        6: -9,
+        7: -8.75,
+        8: -8.75,
+        9: -9,
+        10: -9,
+        11: -9,
+        12: -9,
+        13: -9,
+        14: -9,
+        15: -8.75,
+        16: -8.75,
+        17: -9,
+        18: -9,
+        19: -9,
+        20: -9,
+        21: -9,
+        22: -9,
+        23: -8.75,
+        24: -9,
+        25: -9.05,
+        26: -9.05,
+        27: -9.05,
+        28: -9.05,
+        29: -9.05,
+        30: -9.05,
+        31: -9,
+        32: -9,
+        33: -9.2,
+        34: -9.2,
+        35: -9.05,
+        36: -9.05,
+        37: -9.2,
+        38: -9.2,
+        39: -9,
+        40: -8.75,
+        41: -9,
+        42: -9,
+        43: -9,
+        44: -9,
+        45: -9,
+        46: -9,
+        47: -8.75,
+        48: -8.5,
+        49: -8.95,
+        50: -8.95,
+        51: -8.95,
+        52: -8.95,
+        53: -8.95,
+        54: -8.95,
+        55: -8.5,
+        56: -8.5,
+        57: -8.5,
+        58: -8.75,
+        59: -8.95,
+        60: -8.95,
+        61: -8.75,
+        62: -8.5,
+        63: -8.5
+    }
+
     #Return the pieces character
     def GetChar(self):
         return self.char
+
+    #Method to get an isolated eval of this piece
+    def getEval(self, row, col):
+        return self.PSM[(row*8)+col]
 
     #Method to get all moves by the piece
     def getMoves(self, board, cRow, cCol):

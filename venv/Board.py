@@ -72,28 +72,11 @@ class Board:
 
     # Method to get evaluation of the board
     def getEval(self):
-        self.setMaterial()  # Get the material
-        val = self.getMaterial()  # Basic material evaluation
-        # Strength given to having pawns in center 4 squares (+0.25), pieces recieves (+0.1)
-        for row in range(3, 5):
-            for col in range(3, 5):
-                if self.board[row][col].material == 1 or self.board[row][col].material == -1:
-                    val += self.board[row][col].material * 0.25
-                elif self.board[row][col].material > 0:
-                    val += 0.1
-                elif self.board[row][col].material < 0:
-                    val -= 0.1
-        # Strength given to developing pieces (value taken away if on home - B: 0.2, N: 0.2, R: 0.1, Q: 0.1)
-        for col in range(8):
-            if self.board[0][col].char == 'Q' or self.board[0][col].char == "R":
-                val -= 0.1
-            if self.board[7][col].char == 'q' or self.board[7][col].char == "r":
-                val += 0.1
-            if self.board[0][col].char == 'B' or self.board[0][col].char == "N":
-                val -= 0.2
-            if self.board[7][col].char == 'b' or self.board[7][col].char == "n":
-                val += 0.2
-        return val
+        eval = 0
+        for row in range(8):
+            for col in range(8):
+                eval += self.board[row][col].getEval(row, col)  # Isolated piece evaluation
+        return eval
 
     # Method to generate move, children board pairs
     def generateMoves(self, bHistory, killCastleCheck):
