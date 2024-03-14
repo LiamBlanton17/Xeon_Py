@@ -22,26 +22,22 @@ class bPawn:
         #If on starting row, add a double move, if possible
         if cRow == 6:
             if board[5][cCol].material == 0 and board[4][cCol].material == 0:
-                target = cRow + cCol*10 + (cRow-2)*100 + cCol*1000
-                moves.append(target)
+                moves.append(cRow + cCol*10 + (cRow-2)*100 + cCol*1000)
 
-        #Add single move
-        if cRow-1 >= 0 and board[cRow-1][cCol].material == 0:
-            target = cRow + cCol*10 + (cRow-1)*100 + cCol*1000
-            moves.append(target)
+        if cRow-1 >= 0:
+            #Add single move
+            if board[cRow-1][cCol].material == 0:
+                moves.append(cRow + cCol*10 + (cRow-1)*100 + cCol*1000)
 
-        #Capture right
-        if cRow-1 >= 0 and cCol+1 <= 7 and board[cRow-1][cCol+1].material > 0:
-            target = cRow + cCol*10 + (cRow-1)*100 + (cCol+1)*1000
-            moves.append(target)
+            #Capture right
+            if cCol+1 <= 7 and board[cRow-1][cCol+1].material > 0:
+                moves.append(cRow + cCol*10 + (cRow-1)*100 + (cCol+1)*1000)
 
-        #Capture left
-        if cRow-1 >= 0 and cCol-1 >= 0 and board[cRow-1][cCol-1].material > 0:
-            target = cRow + cCol*10 + (cRow-1)*100 + (cCol-1)*1000
-            moves.append(target)
+            #Capture left
+            if cCol-1 >= 0 and board[cRow-1][cCol-1].material > 0:
+                moves.append(cRow + cCol*10 + (cRow-1)*100 + (cCol-1)*1000)
 
         return moves
-
 
     #Enpassent (same code in moves as a normal move)
     def enpassent(self, board, cRow, cCol, bHLength, previousBoard):

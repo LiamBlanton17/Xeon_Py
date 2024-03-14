@@ -2,10 +2,71 @@
 ------------------------------------------- TO DO -------------------------------------------
 ---------------------------------------------------------------------------------------------
 Implement promotion - should be working, right now auto promotes to queen, fix later
-!!!!! Check if the king is in check - kinda works (COULD WORD???)
-Implement 50move rule draws (probably works, not gonna test it)
-NEED TO FIX ISSUES WITH GAME SLOWING OVER TIME
+Implement AI
 
+---------------------------------------------------------------------------------------------
+------------------------------------------ XEON AI ------------------------------------------
+---------------------------------------------------------------------------------------------
+HIGH LEVEL
+# Returns the best move of the main board
+XeonMove(MainBoard):
+    depth = desired search depth
+    bestMove = 0
+    bestEval = -1000 if MainBoard.turn is white || 1000 if MainBoard.turn is black
+    for move in MainBoard.moves:
+        eval = MiniMax([MainBoard], min/max, depth).getEval
+        if eval better than bestEval
+            bestEval = eval
+            bestMove = Move
+    return bestMove
+
+# Returns the best Board of a list of boards
+MiniMax([List of Boards], min/max, depth):
+    if depth has NOT been reached:
+        for each Board in [List of Boards]
+            Create [Children of Board]
+            # Here was are replacing the current board with the best board of its children
+            Board = MiniMax([Children of Board], min/max, depth+1)
+    return Board with best eval (from min/max) from [List of Boards]
+
+MORE IN DEPTH
+XeonMove(MainBoard):
+    ply = 0  # Current depth
+    depth = 5  # Target Depth
+    bestMove = 0
+    if MainBoard.turn == "white":
+        bestEval = -1000
+        minmax = 1  # 1 for max, -1 for min
+    else:
+        bestEval = 1000
+        minmax = -1  # 1 for max, -1 for min
+    for move in MainBoard.moves:
+        eval = MiniMax([MainBoard], minmax, ply, depth)
+        if max && eval > bestEval:
+            bestEval = eval
+            bestMove = move
+        if min && eval < bestEval:
+            bestEval = eval
+            bestMove = move
+    return bestMove
+
+MiniMax(ListOfBoards, minmax, minmax, ply, depth):
+    if ply < depth:
+        for Board in ListOfBoards:
+            Children = GetBoardChildren(Board)
+            Board = MiniMax(Children, minmax*-1, ply+1, depth)
+    BestBoard = NULL
+    for Board in ListOfBoards:
+        if max && Board.eval > BestBoard.eval:
+            BestBoard = Board
+        if min && Board.eval < BestBoard.eval:
+            BestBoard = Board
+    return BestBoard
+
+GetBoardChildren(Board):
+    Children = []
+    Board.GenerateMoves()
+    for move in Board.moves:
 
 ---------------------------------------------------------------------------------------------
 ----------------------------------------- GAME FLOW -----------------------------------------
@@ -550,3 +611,18 @@ class Board:
                 col += 1
             row += 1
         return 1
+---------------------------------------
+BACKUP KingIsInCheck
+def isKingInCheck(self, testB, move, bHistory):
+        testB.updateBoard(move, bHistory, False, False)
+        nextMoves = testB.generateMoves(bHistory, True)
+        hashedBoard = HashBoard(testB)  # Created a saved hashed board
+        holdTurn = testB.turn
+        for nmove in nextMoves:
+            testB.board = DeHashBoard(hashedBoard)  # Reset testB
+            testB.turn = holdTurn  # Set this copy to the opponent
+            testB.updateBoard(nmove, bHistory, False, False)
+            # testB.PrintBoard()
+            if not (500 > testB.material > -500):
+                return 0
+        return move

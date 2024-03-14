@@ -1,9 +1,10 @@
 # Main Class
 import copy
 import sys
+import timeit
 
 # Import all other classes
-import Board, wKing, wQueen, wRook, wBishop, wKnight, wPawn, bKing, bQueen, bRook, bBishop, bKnight, bPawn, Empty
+# import Board, wKing, wQueen, wRook, wBishop, wKnight, wPawn, bKing, bQueen, bRook, bBishop, bKnight, bPawn, Empty
 from Board import *
 from wKing import *
 from wQueen import *
@@ -19,6 +20,7 @@ from bKnight import *
 from bPawn import *
 from Empty import *
 from Input import *
+from Xeon import *
 
 #Starting conditions
 startingBoard = [[wRook(), wKnight(), wBishop(), wQueen(), wKing(), wBishop(), wKnight(), wRook()],
@@ -45,16 +47,28 @@ boardHistory = []
 mainBoard = Board(startingBoard, 'white', '1111', boardHistory, True)
 
 # Loop
-while (500 > mainBoard.eval > -500) and len(mainBoard.moves) > 0:
-    print("MAIN BOARD ------------------- ")
-    mainBoard.PrintBoard()
-    print(mainBoard.getEval())
-    print("MAIN BOARD ------------------- ")
-    move = takeUIn(mainBoard)
-    if move == 9999:  # Debugging statement, code 9999 to draw game
-        break
-    mainBoard.updateBoard(move, boardHistory, True)
+def mainLoop():
+    while (500 > mainBoard.eval > -500) and len(mainBoard.moves) > 0:
+        for i in range(25):  # Used to format the game loop
+            print()
+        print("-------------------------------------- ")
+        mainBoard.PrintBoard()
+        print("EVAL: ", mainBoard.getEval())
+        print("--------------------------------------")
+        # Right now you only play as white
+        if mainBoard.turn == "white":
+            move = takeUIn(mainBoard)
+        else:
+            move = XeonMove(mainBoard, boardHistory)
+        if move == 9999:  # Debugging statement, code 9999 to draw game
+            break
+        mainBoard.updateBoard(move, boardHistory, True, True)
 
-print("GG")
+    print("GG")
 
-
+import cProfile
+from pympler.tracker import SummaryTracker
+#tracker = SummaryTracker()
+cProfile.run("mainLoop()")
+#mainLoop()
+#tracker.print_diff()

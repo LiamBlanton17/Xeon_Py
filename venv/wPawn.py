@@ -22,23 +22,20 @@ class wPawn:
         #If on starting row, add a double move, if possible
         if cRow == 1:
             if board[2][cCol].material == 0 and board[3][cCol].material == 0:
-                target = cRow + cCol*10 + (cRow+2)*100 + cCol*1000
-                moves.append(target)
+                moves.append(cRow + cCol*10 + (cRow+2)*100 + cCol*1000)
 
-        #Add single move
-        if cRow+1 <= 7 and board[cRow+1][cCol].material == 0:
-            target = cRow + cCol*10 + (cRow+1)*100 + cCol*1000
-            moves.append(target)
+        if cRow+1 <= 7:
+            #Add single move
+            if board[cRow+1][cCol].material == 0:
+                moves.append(cRow + cCol*10 + (cRow+1)*100 + cCol*1000)
 
-        #Capture right
-        if cRow+1 <= 7 and cCol+1 <= 7 and board[cRow+1][cCol+1].material < 0:
-            target = cRow + cCol*10 + (cRow+1)*100 + (cCol+1)*1000
-            moves.append(target)
+            #Capture right
+            if cCol+1 <= 7 and board[cRow+1][cCol+1].material < 0:
+                moves.append(cRow + cCol*10 + (cRow+1)*100 + (cCol+1)*1000)
 
-        #Capture left
-        if cRow+1 <= 7 and cCol-1 >= 0 and board[cRow+1][cCol-1].material < 0:
-            target = cRow + cCol*10 + (cRow+1)*100 + (cCol-1)*1000
-            moves.append(target)
+            #Capture left
+            if cCol-1 >= 0 and board[cRow+1][cCol-1].material < 0:
+                moves.append(cRow + cCol*10 + (cRow+1)*100 + (cCol-1)*1000)
 
         return moves
 
