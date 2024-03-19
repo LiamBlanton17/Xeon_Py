@@ -90,36 +90,40 @@ class bKnight:
     #Get Moves method
     def getMoves(self, board, cRow, cCol):
         moves = []
-        #Check up-right
-        if not (cRow+2 > 7 or cCol+1 > 7 or board[cRow+2][cCol+1].material < 0):
-            target = cRow + cCol*10 + (cRow+2)*100 + (cCol+1)*1000
-            moves.append(target)
-        #Check up-left
-        if not (cRow+2 > 7 or cCol-1 < 0 or board[cRow+2][cCol-1].material < 0):
-            target = cRow + cCol*10 + (cRow+2)*100 + (cCol-1)*1000
-            moves.append(target)
-        #Check right-up
-        if not (cRow+1 > 7 or cCol+2 > 7 or board[cRow+1][cCol+2].material < 0):
-            target = cRow + cCol*10 + (cRow+1)*100 + (cCol+2)*1000
-            moves.append(target)
-        #Check right-down
-        if not (cRow-1 < 0 or cCol+2 > 7 or board[cRow-1][cCol+2].material < 0):
-            target = cRow + cCol*10 + (cRow-1)*100 + (cCol+2)*1000
-            moves.append(target)
-        #Check left-up
-        if not (cRow+1 > 7 or cCol-2 < 0 or board[cRow+1][cCol-2].material < 0):
-            target = cRow + cCol*10 + (cRow+1)*100 + (cCol-2)*1000
-            moves.append(target)
-        #Check left-down
-        if not (cRow-1 < 0 or cCol-2 < 0 or board[cRow-1][cCol-2].material < 0):
-            target = cRow + cCol*10 + (cRow-1)*100 + (cCol-2)*1000
-            moves.append(target)
-        #Check down-right
-        if not (cRow-2 < 0 or cCol+1 > 7 or board[cRow-2][cCol+1].material < 0):
-            target = cRow + cCol*10 + (cRow-2)*100 + (cCol+1)*1000
-            moves.append(target)
-        #Check down-left
-        if not (cRow-2 < 0 or cCol-1 < 0 or board[cRow-2][cCol-1].material < 0):
-            target = cRow + cCol*10 + (cRow-2)*100 + (cCol-1)*1000
-            moves.append(target)
+        if cRow+2 <= 7:
+            #Check up-right
+            if not (cCol+1 > 7 or board[cRow+2][cCol+1].material < 0):
+                target = cRow + cCol*10 + (cRow+2)*100 + (cCol+1)*1000
+                moves.append(target)
+            #Check up-left
+            if not (cCol-1 < 0 or board[cRow+2][cCol-1].material < 0):
+                target = cRow + cCol*10 + (cRow+2)*100 + (cCol-1)*1000
+                moves.append(target)
+        if cCol+2 <= 7:
+            #Check right-up
+            if not (cRow+1 > 7 or board[cRow+1][cCol+2].material < 0):
+                target = cRow + cCol*10 + (cRow+1)*100 + (cCol+2)*1000
+                moves.append(target)
+            #Check right-down
+            if not (cRow-1 < 0 or board[cRow-1][cCol+2].material < 0):
+                target = cRow + cCol*10 + (cRow-1)*100 + (cCol+2)*1000
+                moves.append(target)
+        if cCol-2 >= 0:
+            #Check left-up
+            if not (cRow+1 > 7 or board[cRow+1][cCol-2].material < 0):
+                target = cRow + cCol*10 + (cRow+1)*100 + (cCol-2)*1000
+                moves.append(target)
+            #Check left-down
+            if not (cRow-1 < 0 or board[cRow-1][cCol-2].material < 0):
+                target = cRow + cCol*10 + (cRow-1)*100 + (cCol-2)*1000
+                moves.append(target)
+        if cRow-2 >= 0:
+            #Check down-right
+            if not (cCol+1 > 7 or board[cRow-2][cCol+1].material < 0):
+                target = cRow + cCol*10 + (cRow-2)*100 + (cCol+1)*1000
+                moves.append(target)
+            #Check down-left
+            if not (cCol-1 < 0 or board[cRow-2][cCol-1].material < 0):
+                target = cRow + cCol*10 + (cRow-2)*100 + (cCol-1)*1000
+                moves.append(target)
         return moves

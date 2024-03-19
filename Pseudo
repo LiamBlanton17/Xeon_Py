@@ -3,7 +3,24 @@
 ---------------------------------------------------------------------------------------------
 Implement promotion - should be working, right now auto promotes to queen, fix later
 Implement AI
-
+# Sort the moves, right now only sorts captures to top
+        moves = self.moves
+        i = 0
+        for j in range(len(moves)):
+            tmove = moves[j] // 100
+            row = tmove % 10
+            tmove //= 10
+            col = tmove
+            if self.turn == 'white' and self.board[row][col].material < 0:
+                hmove = moves[i]
+                moves[i] = moves[j]
+                move = hmove
+                i += 1
+            elif self.turn == 'black' and self.board[row][col].material > 0:
+                hmove = moves[i]
+                moves[i] = moves[j]
+                moves[j] = hmove
+                i += 1
 ---------------------------------------------------------------------------------------------
 ------------------------------------------ XEON AI ------------------------------------------
 ---------------------------------------------------------------------------------------------
@@ -174,8 +191,8 @@ wBishop: (3) DONE
 bPawn: (-1) (all values *-1) DONE
     0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
     1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00
-    1.05 1.05 1.05 1.05 1.05 0.95 1.00 1.05
-    1.00 1.00 1.05 1.10 1.10 0.95 0.95 0.95
+    1.05 1.05 1.05 1.15 1.15 0.85 1.00 1.05
+    1.00 1.00 1.15 1.21 1.21 0.85 0.95 0.95
     1.00 1.00 1.10 1.15 1.15 1.00 1.00 1.00
     1.05 1.05 1.12 1.17 1.17 1.05 1.05 1.05
     1.07 1.07 1.15 1.20 1.20 1.07 1.07 1.07
@@ -186,8 +203,8 @@ wPawn: (1) DONE
     1.07 1.07 1.15 1.20 1.20 1.07 1.07 1.07
     1.05 1.05 1.12 1.17 1.17 1.05 1.05 1.05
     1.00 1.00 1.10 1.15 1.15 1.00 1.00 1.00
-    1.00 1.00 1.05 1.10 1.10 0.95 0.95 0.95
-    1.05 1.05 1.05 1.05 1.05 0.95 1.00 1.05
+    1.00 1.00 1.15 1.21 1.21 0.85 0.95 0.95
+    1.05 1.05 1.05 1.15 1.15 0.85 1.00 1.05
     1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00
     0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
 
@@ -749,3 +766,14 @@ def isKingInCheck(self, testB, move, bHistory):
             if not (500 > testB.material > -500):
                 return 0
         return move
+------------------------
+BACKUP
+for row in range(8):
+            for col in range(8):
+                #Make sure it is current players turn
+                if (self.turn == 'white' and self.board[row][col].material < 0) or (self.turn == 'black' and self.board[row][col].material > 0) or self.board[row][col].material == 0:
+                    continue
+                moves.extend(self.board[row][col].getMoves(self.board, row, col))
+                #Pawn Enpassant
+                if (self.board[row][col].char == 'P' or self.board[row][col].char == 'p') and len(bHistory) > 0:
+                    moves.extend(self.board[row][col].enpassent(self.board, row, col, len(bHistory), DeHashBoard(bHistory[len(bHistory)-1])))
