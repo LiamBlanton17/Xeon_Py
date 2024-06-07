@@ -32,14 +32,16 @@ startingBoard = [[wRook(), wKnight(), wBishop(), wQueen(), wKing(), wBishop(), w
                  [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
                  [bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn()],
                  [bRook(), bKnight(), bBishop(), bQueen(), bKing(), bBishop(), bKnight(), bRook()]]
-testingBoard = [[wRook(), Empty(), Empty(), Empty(), wKing(), Empty(), Empty(), wRook()],
-                [wPawn(), wPawn(), wPawn(), wPawn(), wPawn(), wPawn(), wPawn(), wPawn()],
-                [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
-                [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
-                [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
-                [Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty(), Empty()],
-                [bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn()],
-                [bRook(), Empty(), Empty(), Empty(), bKing(), Empty(), Empty(), bRook()]]
+
+testBoard = [[wRook(), wKnight(), wBishop(), wQueen(), wKing(), wBishop(), Empty(), wRook()],
+             [wPawn(), wPawn(), wPawn(), wPawn(), Empty(), wPawn(), wPawn(), wPawn()],
+             [Empty(), Empty(), Empty(), Empty(), Empty(), wKnight(), Empty(), Empty()],
+             [Empty(), Empty(), Empty(), Empty(), wPawn(), Empty(), Empty(), Empty()],
+             [Empty(), Empty(), Empty(), Empty(), bPawn(), Empty(), Empty(), Empty()],
+             [Empty(), Empty(), bKnight(), Empty(), Empty(), Empty(), Empty(), Empty()],
+             [bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn(), bPawn()],
+             [bRook(), Empty(), bBishop(), bQueen(), bKing(), bBishop(), bKnight(), bRook()]]
+
 
 #Board history list
 boardHistory = []
@@ -63,7 +65,7 @@ def mainLoop():
         if playerTurn == 'AI':
             time.sleep(3)
         if mainBoard.turn == playerTurn or playerTurn == 'USER':
-            move = takeUIn(mainBoard)
+            move = takeUIn(mainBoard, mainBoard.turn)
         else:
             #move = takeUIn(mainBoard)
             results = XeonMove(mainBoard, boardHistory)
@@ -76,7 +78,8 @@ def mainLoop():
     print("GG")
 
 from pympler.tracker import SummaryTracker
-#tracker = SummaryTracker()
+tracker = SummaryTracker()
 cProfile.run("mainLoop()")
+tracker.print_diff()
+
 #mainLoop()
-#tracker.print_diff()

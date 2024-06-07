@@ -1,26 +1,21 @@
 ---------------------------------------------------------------------------------------------
 ------------------------------------------- TO DO -------------------------------------------
 ---------------------------------------------------------------------------------------------
-Implement promotion - should be working, right now auto promotes to queen, fix later
-Implement AI
-# Sort the moves, right now only sorts captures to top
-        moves = self.moves
-        i = 0
-        for j in range(len(moves)):
-            tmove = moves[j] // 100
-            row = tmove % 10
-            tmove //= 10
-            col = tmove
-            if self.turn == 'white' and self.board[row][col].material < 0:
-                hmove = moves[i]
-                moves[i] = moves[j]
-                move = hmove
-                i += 1
-            elif self.turn == 'black' and self.board[row][col].material > 0:
-                hmove = moves[i]
-                moves[i] = moves[j]
-                moves[j] = hmove
-                i += 1
+Fix promotion (allow player to select pieces, just default AI to queen as its not worth hassle imo)
+
+For the engine:
+    - Order captures/killers by Piece to be captured - piece attacking (valued captures)
+    - Order cut offs and previous cut offs but ranking - DONE (very small improvement)
+    - Find ways to speed up genMoves (prolly still some minor stuff to be done, but its kinda quick already)
+    - Improve eval function
+        - Add a way to tell if in opening, middle, or endgame (first 5 moves opening, once less than 16 pieces is end game?)
+        - Piece-Square tables
+            - One for opening, middle, and endgame (current works for middle game mainly)
+        - Look at space controlled (mainly where pawns are)
+        - Give more bonuses to getting king out of center
+        - Look at pieces around each king (pawns and otherwise)
+        - Look at piece mobility (hard to evaluate how to score it however)
+
 ---------------------------------------------------------------------------------------------
 ------------------------------------------ XEON AI ------------------------------------------
 ---------------------------------------------------------------------------------------------
@@ -385,395 +380,497 @@ Element 0-63 :: a1-h8
 Element 64 :: Castling Rights
 Element 65 :: Move Turn
 
----------------------------------------------------------------------------------------------
-------------------------------------- BACK UP OF Board --------------------------------------
----------------------------------------------------------------------------------------------
-# Board Class
-import copy
+------------------------------------------ PSTs ------------------------------------------
+MAP OF BOARD
+  0a 1b 2c 3d 4e 5f 6g 7h
+7 56 57 58 59 60 61 62 63
+6 48 49 50 51 52 53 54 55
+5 40 41 42 43 44 45 46 47
+4 32 33 34 35 36 37 38 39
+3 24 25 26 27 28 29 30 31
+2 16 17 18 19 20 21 22 23
+1 08 09 10 11 12 13 14 15
+0 00 01 02 03 04 05 06 07
 
-# Import all other classes
-from wKing import *
-from wQueen import *
-from wRook import *
-from wBishop import *
-from wKnight import *
-from wPawn import *
-from bKing import *
-from bQueen import *
-from bRook import *
-from bBishop import *
-from bKnight import *
-from bPawn import *
-from Empty import *
+----- wQueen PSTs ----- DONE
+(Standard value of +9)
+Opening:
+-0.30 -0.30 -0.30 -0.30 -0.30 -0.30 -0.30 -0.30
+-0.25 -0.25 -0.30 -0.35 -0.35 -0.35 -0.25 -0.25
+-0.20 -0.25 -0.30 -0.35 -0.35 -0.35 -0.25 -0.20
+-0.10 -0.20 -0.25 -0.30 -0.30 -0.25 -0.20 -0.10
+-0.05 -0.10 -0.20 -0.25 -0.25 -0.25 -0.15 -0.10
+-0.05 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00 -0.10
+-0.15 -0.05 +0.00 +0.00 +0.00 -0.05 -0.15 -0.20
+-0.30 -0.20 -0.10 +0.00 +0.00 -0.15 -0.25 -0.35
 
-# Class
-class Board:
+Middle-Game:
++0.10 +0.25 +0.25 +0.10 +0.10 +0.25 +0.25 +0.10
++0.10 +0.25 +0.25 +0.10 +0.10 +0.25 +0.25 +0.10
++0.10 +0.25 +0.25 +0.10 +0.10 +0.25 +0.25 +0.10
++0.05 +0.15 +0.15 +0.05 +0.05 +0.15 +0.15 +0.05
++0.00 +0.05 +0.10 +0.05 +0.05 +0.10 +0.10 +0.00
+-0.20 +0.05 +0.05 +0.00 +0.00 +0.05 +0.05 -0.20
+-0.30 -0.20 +0.00 +0.00 +0.00 -0.10 -0.15 -0.35
+-0.40 -0.30 -0.20 -0.05 -0.15 -0.25 -0.35 -0.45
 
-    # Variables
-    fiftyMoves = 0  # 50 move counter
-    eval = 0  # Evaluation of board
-    material = 0  # Material on the board
-    castlingRights = 1111  # Castleing rights, WShort, WLong, BShort, BLong
+Endgame:
+-0.45 -0.35 -0.25 -0.10 -0.10 -0.25 -0.35 -0.45
+-0.35 -0.20 -0.05 +0.05 +0.05 -0.05 -0.20 -0.35
+-0.25 -0.05 +0.05 +0.15 +0.15 +0.05 -0.05 -0.25
+-0.10 +0.05 +0.15 +0.25 +0.25 +0.15 +0.05 -0.10
+-0.10 +0.05 +0.15 +0.25 +0.25 +0.15 +0.05 -0.10
+-0.25 -0.05 +0.05 +0.15 +0.15 +0.05 -0.05 -0.25
+-0.35 -0.20 -0.05 +0.05 +0.05 -0.05 -0.20 -0.35
+-0.45 -0.35 -0.25 -0.10 -0.10 -0.25 -0.35 -0.45
 
-    # Constructor
-    def __init__(self, board, turn, castlingRights, boardHistory):
-        self.turn = turn  # Who's turn is it
-        self.castlingRights = list(castlingRights)
-        self.board = board.copy()  # Setting the board of the object (2d array of pieces)
-        self.boardHistory = boardHistory
-        self.touchMoves()
-        self.moves = self.generateMoves(self.boardHistory, False, False)  # Generate moves from current board
+----- bQueen PSTs ----- DONE
+(Standard value of -9) (multiply PST values by -1)
+Opening:
+-0.30 -0.20 -0.10 +0.00 +0.00 -0.15 -0.25 -0.35
+-0.15 -0.05 +0.00 +0.00 +0.00 -0.05 -0.15 -0.20
+-0.05 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00 -0.10
+-0.05 -0.10 -0.20 -0.25 -0.25 -0.25 -0.15 -0.10
+-0.10 -0.20 -0.25 -0.30 -0.30 -0.25 -0.20 -0.10
+-0.20 -0.25 -0.30 -0.35 -0.35 -0.35 -0.25 -0.20
+-0.25 -0.25 -0.30 -0.35 -0.35 -0.35 -0.25 -0.25
+-0.30 -0.30 -0.30 -0.30 -0.30 -0.30 -0.30 -0.30
 
-    # Method to get the board
-    def GetBoard(self):
-        return self.board
+Middle-Game:
+-0.40 -0.30 -0.20 -0.05 -0.15 -0.25 -0.35 -0.45
+-0.30 -0.20 +0.00 +0.00 +0.00 -0.10 -0.15 -0.35
+-0.20 +0.05 +0.05 +0.00 +0.00 +0.05 +0.05 -0.20
++0.00 +0.05 +0.10 +0.05 +0.05 +0.10 +0.10 +0.00
++0.05 +0.15 +0.15 +0.05 +0.05 +0.15 +0.15 +0.05
++0.10 +0.25 +0.25 +0.10 +0.10 +0.25 +0.25 +0.10
++0.10 +0.25 +0.25 +0.10 +0.10 +0.25 +0.25 +0.10
++0.10 +0.25 +0.25 +0.10 +0.10 +0.25 +0.25 +0.10
 
-    # Method to print the board to the console
-    # TO DO: Swap which way it prints depending on who's move it is
-    def PrintBoard(self):
-        for row in range(7, -1, -1):
-            print(row+1, end=" ")
-            for col in range(8):
-                print(self.board[row][col].char, end=" ")
-            print()
-        print("  A B C D E F G H")
-        print()
+Endgame:
+-0.45 -0.35 -0.25 -0.10 -0.10 -0.25 -0.35 -0.45
+-0.35 -0.20 -0.05 +0.05 +0.05 -0.05 -0.20 -0.35
+-0.25 -0.05 +0.05 +0.15 +0.15 +0.05 -0.05 -0.25
+-0.10 +0.05 +0.15 +0.25 +0.25 +0.15 +0.05 -0.10
+-0.10 +0.05 +0.15 +0.25 +0.25 +0.15 +0.05 -0.10
+-0.25 -0.05 +0.05 +0.15 +0.15 +0.05 -0.05 -0.25
+-0.35 -0.20 -0.05 +0.05 +0.05 -0.05 -0.20 -0.35
+-0.45 -0.35 -0.25 -0.10 -0.10 -0.25 -0.35 -0.45
 
-    # Method to get material of the board
-    def getMaterial(self):
-        val = 0
-        for row in range(8):
-            for col in range(8):
-                val += self.board[row][col].material
-        return val
+----- wRook PSTs ----- DONE
+(Standard value of +5)
+Opening:
+-0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25
+-0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25
+-0.35 -0.35 -0.35 -0.35 -0.35 -0.35 -0.35 -0.35
+-0.35 -0.35 -0.35 -0.35 -0.35 -0.35 -0.35 -0.35
+-0.35 -0.35 -0.35 -0.35 -0.35 -0.35 -0.35 -0.35
+-0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25
+-0.15 -0.15 -0.10 -0.10 -0.10 -0.10 -0.15 -0.15
++0.00 +0.00 +0.10 +0.15 +0.15 -0.15 -0.10 -0.05
 
-    # Method to get evaluation of the board
-    def getEval(self):
-        val = 0
-        for row in range(8):
-            for col in range(8):
-                val += self.board[row][col].value
-        return val
+Middle-Game:
++0.00 +0.10 +0.15 +0.15 +0.15 +0.15 +0.10 +0.00
++0.05 +0.15 +0.20 +0.20 +0.20 +0.20 +0.15 +0.05
+-0.20 -0.20 -0.20 -0.20 -0.20 -0.20 -0.20 -0.20
+-0.20 -0.20 -0.20 -0.20 -0.20 -0.20 -0.20 -0.20
+-0.20 -0.20 -0.20 -0.20 -0.20 -0.20 -0.20 -0.20
+-0.15 -0.10 -0.05 +0.00 +0.00 -0.05 -0.10 -0.15
+-0.10 -0.05 +0.05 +0.10 +0.10 +0.05 -0.05 -0.10
+-0.05 +0.05 +0.15 +0.25 +0.25 +0.15 +0.05 -0.05
 
-    # Method to generate move, children board pairs
-    def generateMoves(self, bHistory, killCastle, killCheck):
-        print("IN: Generate Moves")
-        moves = []
-        wKPos = 0
-        bKPos = 0
-        #Loop over each piece in the board
-        for row in range(8):
-            for col in range(8):
-                #Make sure it is current players turn
-                if (self.turn == 'white' and self.board[row][col].material < 0) or (self.turn == 'black' and self.board[row][col].material > 0):
-                    continue
-                moves.extend(self.board[row][col].getMoves(self.board, row, col))
-                #Pawn Enpassant
-                if self.board[row][col].char == 'P' or self.board[row][col].char == 'p':
-                    moves.extend(self.board[row][col].enpassent(self.board, row, col, bHistory))
-        #Check for castling
-        if not killCastle:
-            if self.turn == 'white':
-                #White short
-                if self.castlingRights[0] == '1' and self.board[0][5].material == 0 and self.board[0][6].material == 0:
-                    #Below should check to see if the king is in or moving through check
-                    testB = copy.deepcopy(self)  # Create a copy of the current board
-                    testB.turn = 'black'  # Set this copy to the opponent
-                    opponentMoves = testB.generateMoves(bHistory, True, True)  # See where opponents pieces can move it
-                    #Loop through and parse out the moves to only get the target square
-                    i = 0
-                    for move in opponentMoves:
-                        move //= 100
-                        opponentMoves[i] = move
-                        i += 1
-                    #Determine if the king will move through check
-                    moveThroughCheck = False
-                    for move in opponentMoves:
-                        if move == 40 or move == 50 or move == 60:
-                            moveThroughCheck = True
-                    if not moveThroughCheck:
-                        moves.extend([8880])
-                    del testB
-                #White Long
-                if self.castlingRights[1] == '1' and self.board[0][3].material == 0 and self.board[0][2].material == 0 and self.board[0][1] == 0:
-                    #Below should check to see if the king is in or moving through check
-                    testB = copy.deepcopy(self)  # Create a copy of the current board
-                    testB.turn = 'black'  # Set this copy to the opponent
-                    opponentMoves = testB.generateMoves(bHistory, True, True)  # See where opponents pieces can move it
-                    #Loop through and parse out the moves to only get the target square
-                    i = 0
-                    for move in opponentMoves:
-                        move //= 100
-                        opponentMoves[i] = move
-                        i += 1
-                    #Determine if the king will move through check
-                    moveThroughCheck = False
-                    for move in opponentMoves:
-                        if move == 40 or move == 30 or move == 20:
-                            moveThroughCheck = True
-                    if not moveThroughCheck:
-                        moves.extend([8881])
-                    del testB
-            if self.turn == 'black':
-                #Black short
-                if self.castlingRights[2] == '1' and self.board[7][5].material == 0 and self.board[7][6].material == 0:
-                    #Below should check to see if the king is in or moving through check
-                    testB = copy.deepcopy(self)  # Create a copy of the current board
-                    testB.turn = 'white'  # Set this copy to the opponent
-                    opponentMoves = testB.generateMoves(bHistory, True, True)  # See where opponents pieces can move it
-                    #Loop through and parse out the moves to only get the target square
-                    i = 0
-                    for move in opponentMoves:
-                        move //= 100
-                        opponentMoves[i] = move
-                        i += 1
-                    #Determine if the king will move through check
-                    moveThroughCheck = False
-                    for move in opponentMoves:
-                        if move == 47 or move == 57 or move == 67:
-                            moveThroughCheck = True
-                    if not moveThroughCheck:
-                        moves.extend([9990])
-                    del testB
-                #Black Long
-                if self.castlingRights[3] == '1' and self.board[7][3].material == 0 and self.board[7][2].material == 0 and self.board[7][1] == 0:
-                    #Below should check to see if the king is in or moving through check
-                    testB = copy.deepcopy(self)  # Create a copy of the current board
-                    testB.turn = 'white'  # Set this copy to the opponent
-                    opponentMoves = testB.generateMoves(bHistory, True, True)  # See where opponents pieces can move it
-                    #Loop through and parse out the moves to only get the target square
-                    i = 0
-                    for move in opponentMoves:
-                        move //= 100
-                        opponentMoves[i] = move
-                        i += 1
-                    #Determine if the king will move through check
-                    moveThroughCheck = False
-                    for move in opponentMoves:
-                        if move == 47 or move == 37 or move == 27:
-                            moveThroughCheck = True
-                    if not moveThroughCheck:
-                        moves.extend([9991])
-                    del testB
-        #See if king is in check after a move, and prune it
-        if not killCheck:
-            # Loop through the current moves, create a new board object for each
-            i = 0
-            for move in moves:
-                moves[i] = self.isKingInCheck(move, bHistory)
+Endgame:
++0.00 +0.10 +0.20 +0.20 +0.20 +0.20 +0.10 +0.00
++0.05 +0.15 +0.25 +0.25 +0.25 +0.25 +0.15 +0.05
+-0.05 +0.05 +0.15 +0.15 +0.15 +0.15 +0.05 -0.05
+-0.05 +0.05 +0.15 +0.15 +0.15 +0.15 +0.05 -0.05
+-0.05 +0.05 +0.15 +0.15 +0.15 +0.15 +0.05 -0.05
+-0.05 +0.05 +0.15 +0.15 +0.15 +0.15 +0.05 -0.05
+-0.05 +0.05 +0.15 +0.15 +0.15 +0.15 +0.05 -0.05
+-0.05 +0.05 +0.15 +0.15 +0.15 +0.15 +0.05 -0.05
+
+----- bRook PSTs ----- DONE
+(Standard value of -5) (multiply PST values by -1)
+Opening:
++0.00 +0.00 +0.10 +0.15 +0.15 -0.15 -0.10 -0.05
+-0.15 -0.15 -0.10 -0.10 -0.10 -0.10 -0.15 -0.15
+-0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25
+-0.35 -0.35 -0.35 -0.35 -0.35 -0.35 -0.35 -0.35
+-0.35 -0.35 -0.35 -0.35 -0.35 -0.35 -0.35 -0.35
+-0.35 -0.35 -0.35 -0.35 -0.35 -0.35 -0.35 -0.35
+-0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25
+-0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25
+
+Middle-Game:
+-0.05 +0.05 +0.15 +0.25 +0.25 +0.15 +0.05 -0.05
+-0.10 -0.05 +0.05 +0.10 +0.10 +0.05 -0.05 -0.10
+-0.15 -0.10 -0.05 +0.00 +0.00 -0.05 -0.10 -0.15
+-0.20 -0.20 -0.20 -0.20 -0.20 -0.20 -0.20 -0.20
+-0.20 -0.20 -0.20 -0.20 -0.20 -0.20 -0.20 -0.20
+-0.20 -0.20 -0.20 -0.20 -0.20 -0.20 -0.20 -0.20
++0.05 +0.15 +0.20 +0.20 +0.20 +0.20 +0.15 +0.05
++0.00 +0.10 +0.15 +0.15 +0.15 +0.15 +0.10 +0.00
+
+Endgame:
+-0.05 +0.05 +0.15 +0.15 +0.15 +0.15 +0.05 -0.05
+-0.05 +0.05 +0.15 +0.15 +0.15 +0.15 +0.05 -0.05
+-0.05 +0.05 +0.15 +0.15 +0.15 +0.15 +0.05 -0.05
+-0.05 +0.05 +0.15 +0.15 +0.15 +0.15 +0.05 -0.05
+-0.05 +0.05 +0.15 +0.15 +0.15 +0.15 +0.05 -0.05
+-0.05 +0.05 +0.15 +0.15 +0.15 +0.15 +0.05 -0.05
++0.05 +0.15 +0.25 +0.25 +0.25 +0.25 +0.15 +0.05
++0.00 +0.10 +0.20 +0.20 +0.20 +0.20 +0.10 +0.00
+
+----- wBishop PSTs ----- DONE
+(Standard value of +3)
+Opening:
+-0.15 -0.10 -0.05 -0.05 -0.05 -0.05 -0.10 -0.15
+-0.05 +0.00 +0.05 +0.05 +0.05 +0.05 +0.00 -0.05
++0.00 +0.05 +0.10 +0.10 +0.10 +0.10 +0.05 +0.00
++0.05 +0.25 +0.05 +0.05 +0.05 +0.05 +0.25 +0.05
++0.05 +0.05 +0.25 +0.05 +0.05 +0.25 +0.05 +0.05
+-0.20 +0.05 +0.00 +0.00 +0.00 +0.00 +0.05 -0.20
+-0.10 +0.15 +0.00 +0.05 +0.05 -0.10 +0.15 -0.10
+-0.45 -0.35 -0.05 -0.15 -0.15 -0.10 -0.35 -0.45
+
+Middle-Game:
+-0.15 -0.10 -0.05 -0.05 -0.05 -0.05 -0.10 -0.15
+-0.05 +0.00 +0.05 +0.05 +0.05 +0.05 +0.00 -0.05
++0.00 +0.05 +0.10 +0.10 +0.10 +0.10 +0.05 +0.00
++0.05 +0.30 +0.10 +0.10 +0.10 +0.10 +0.30 +0.05
++0.05 +0.15 +0.30 +0.15 +0.15 +0.30 +0.15 +0.05
++0.00 +0.10 +0.15 +0.15 +0.15 +0.00 +0.10 +0.00
++0.00 +0.30 +0.15 +0.00 +0.00 -0.05 +0.30 +0.00
+-0.45 -0.20 -0.15 -0.15 -0.15 -0.15 -0.20 -0.45
+
+Endgame:
+-0.45 -0.25 -0.10 +0.00 +0.00 -0.10 -0.25 -0.45
+-0.25 -0.10 +0.00 +0.15 +0.15 +0.00 -0.10 -0.25
+-0.10 +0.00 +0.15 +0.25 +0.25 +0.15 +0.00 -0.10
++0.00 +0.15 +0.25 +0.25 +0.25 +0.25 +0.15 +0.00
++0.00 +0.15 +0.25 +0.25 +0.25 +0.25 +0.15 +0.00
+-0.10 +0.00 +0.15 +0.25 +0.25 +0.15 +0.00 -0.10
+-0.25 -0.10 +0.00 +0.15 +0.15 +0.00 -0.10 -0.25
+-0.45 -0.25 -0.10 +0.00 +0.00 -0.10 -0.25 -0.45
+
+----- bBishop PSTs ----- DONE
+(Standard value of -3) (multiply PST values by -1)
+Opening:
+-0.45 -0.35 -0.05 -0.15 -0.15 -0.10 -0.35 -0.45
+-0.10 +0.15 +0.00 +0.05 +0.05 -0.10 +0.15 -0.10
+-0.20 +0.05 +0.00 +0.00 +0.00 +0.00 +0.05 -0.20
++0.05 +0.05 +0.25 +0.05 +0.05 +0.25 +0.05 +0.05
++0.05 +0.25 +0.05 +0.05 +0.05 +0.05 +0.25 +0.05
++0.00 +0.05 +0.10 +0.10 +0.10 +0.10 +0.05 +0.00
+-0.05 +0.00 +0.05 +0.05 +0.05 +0.05 +0.00 -0.05
+-0.15 -0.10 -0.05 -0.05 -0.05 -0.05 -0.10 -0.15
+
+Middle-Game:
+-0.45 -0.20 -0.15 -0.15 -0.15 -0.15 -0.20 -0.45
++0.00 +0.30 +0.15 +0.00 +0.00 -0.05 +0.30 +0.00
++0.00 +0.10 +0.15 +0.15 +0.15 +0.00 +0.10 +0.00
++0.05 +0.15 +0.30 +0.15 +0.15 +0.30 +0.15 +0.05
++0.05 +0.30 +0.10 +0.10 +0.10 +0.10 +0.30 +0.05
++0.00 +0.05 +0.10 +0.10 +0.10 +0.10 +0.05 +0.00
+-0.05 +0.00 +0.05 +0.05 +0.05 +0.05 +0.00 -0.05
+-0.15 -0.10 -0.05 -0.05 -0.05 -0.05 -0.10 -0.15
+
+Endgame:
+-0.45 -0.25 -0.10 +0.00 +0.00 -0.10 -0.25 -0.45
+-0.25 -0.10 +0.00 +0.15 +0.15 +0.00 -0.10 -0.25
+-0.10 +0.00 +0.15 +0.25 +0.25 +0.15 +0.00 -0.10
++0.00 +0.15 +0.25 +0.25 +0.25 +0.25 +0.15 +0.00
++0.00 +0.15 +0.25 +0.25 +0.25 +0.25 +0.15 +0.00
+-0.10 +0.00 +0.15 +0.25 +0.25 +0.15 +0.00 -0.10
+-0.25 -0.10 +0.00 +0.15 +0.15 +0.00 -0.10 -0.25
+-0.45 -0.25 -0.10 +0.00 +0.00 -0.10 -0.25 -0.45
+
+----- wKnight PSTs ----- DONE
+(Standard value of +3)
+Opening:
+-0.55 -0.15 -0.15 -0.25 -0.25 -0.15 -0.20 -0.55
+-0.25 +0.05 +0.10 +0.10 +0.10 +0.10 +0.05 -0.25
+-0.25 +0.15 +0.20 +0.20 +0.20 +0.20 +0.15 -0.25
+-0.25 +0.15 +0.20 +0.20 +0.20 +0.20 +0.15 -0.25
+-0.25 +0.15 +0.20 +0.15 +0.15 +0.20 +0.15 -0.25
+-0.25 +0.10 +0.25 +0.00 +0.00 +0.25 +0.10 -0.25
+-0.30 -0.25 -0.15 +0.05 +0.05 -0.15 -0.25 -0.30
+-0.55 -0.15 -0.15 -0.25 -0.25 -0.15 -0.20 -0.55
+
+Middle-Game:
+-0.35 -0.20 -0.15 -0.10 -0.10 -0.15 -0.20 -0.35
+-0.25 +0.05 +0.20 +0.25 +0.25 +0.20 +0.05 -0.25
+-0.25 +0.15 +0.30 +0.35 +0.35 +0.30 +0.15 -0.25
+-0.25 +0.15 +0.25 +0.35 +0.35 +0.25 +0.15 -0.25
+-0.25 +0.10 +0.25 +0.25 +0.25 +0.25 +0.10 -0.25
+-0.25 +0.05 +0.20 +0.25 +0.25 +0.20 +0.05 -0.25
+-0.35 -0.20 -0.15 -0.10 -0.10 -0.15 -0.20 -0.35
+-0.55 -0.20 -0.20 -0.20 -0.20 -0.20 -0.20 -0.55
+
+Endgame:
+-0.50 -0.40 -0.25 -0.10 -0.10 -0.25 -0.40 -0.50
+-0.40 -0.25 -0.10 +0.00 +0.00 -0.10 -0.25 -0.40
+-0.25 -0.10 +0.00 +0.10 +0.10 +0.00 -0.10 -0.25
+-0.10 +0.00 +0.10 +0.20 +0.20 +0.10 +0.00 -0.10
+-0.10 +0.00 +0.10 +0.20 +0.20 +0.10 +0.00 -0.10
+-0.25 -0.10 +0.00 +0.10 +0.10 +0.00 -0.10 -0.25
+-0.40 -0.25 -0.10 +0.00 +0.00 -0.10 -0.25 -0.40
+-0.50 -0.40 -0.25 -0.10 -0.10 -0.25 -0.40 -0.50
+
+----- bKnight PSTs ----- DONE
+(Standard value of -3) (multiply PST values by -1)
+Opening:
+-0.55 -0.15 -0.15 -0.25 -0.25 -0.15 -0.20 -0.55
+-0.30 -0.25 -0.15 +0.05 +0.05 -0.15 -0.25 -0.30
+-0.25 +0.10 +0.25 +0.00 +0.00 +0.25 +0.10 -0.25
+-0.25 +0.15 +0.20 +0.15 +0.15 +0.20 +0.15 -0.25
+-0.25 +0.15 +0.20 +0.20 +0.20 +0.20 +0.15 -0.25
+-0.25 +0.15 +0.20 +0.20 +0.20 +0.20 +0.15 -0.25
+-0.25 +0.05 +0.10 +0.10 +0.10 +0.10 +0.05 -0.25
+-0.55 -0.15 -0.15 -0.25 -0.25 -0.15 -0.20 -0.55
+
+Middle-Game:
+-0.55 -0.20 -0.20 -0.20 -0.20 -0.20 -0.20 -0.55
+-0.35 -0.20 -0.15 -0.10 -0.10 -0.15 -0.20 -0.35
+-0.25 +0.05 +0.20 +0.25 +0.25 +0.20 +0.05 -0.25
+-0.25 +0.10 +0.25 +0.25 +0.25 +0.25 +0.10 -0.25
+-0.25 +0.15 +0.25 +0.35 +0.35 +0.25 +0.15 -0.25
+-0.25 +0.15 +0.30 +0.35 +0.35 +0.30 +0.15 -0.25
+-0.25 +0.05 +0.20 +0.25 +0.25 +0.20 +0.05 -0.25
+-0.35 -0.20 -0.15 -0.10 -0.10 -0.15 -0.20 -0.35
+
+Endgame:
+-0.50 -0.40 -0.25 -0.10 -0.10 -0.25 -0.40 -0.50
+-0.40 -0.25 -0.10 +0.00 +0.00 -0.10 -0.25 -0.40
+-0.25 -0.10 +0.00 +0.10 +0.10 +0.00 -0.10 -0.25
+-0.10 +0.00 +0.10 +0.20 +0.20 +0.10 +0.00 -0.10
+-0.10 +0.00 +0.10 +0.20 +0.20 +0.10 +0.00 -0.10
+-0.25 -0.10 +0.00 +0.10 +0.10 +0.00 -0.10 -0.25
+-0.40 -0.25 -0.10 +0.00 +0.00 -0.10 -0.25 -0.40
+-0.50 -0.40 -0.25 -0.10 -0.10 -0.25 -0.40 -0.50
+
+----- wPawn PSTs ----- DONE
+(Standard value of +1)
+Opening:
++5.00 +5.00 +5.00 +5.00 +5.00 +5.00 +5.00 +5.00
++0.10 +0.15 +0.30 +0.30 +0.30 +0.25 +0.15 +0.15
++0.00 +0.05 +0.20 +0.25 +0.25 +0.15 +0.05 +0.00
++0.10 +0.05 +0.25 +0.30 +0.30 +0.00 -0.05 +0.00
++0.05 +0.05 +0.20 +0.25 +0.25 -0.05 -0.05 -0.05
++0.05 +0.05 +0.10 +0.10 +0.10 -0.15 +0.00 +0.05
++0.00 +0.00 -0.05 -0.25 -0.25 +0.10 +0.05 +0.00
++0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00
+
+Middle-Game:
++5.00 +5.00 +5.00 +5.00 +5.00 +5.00 +5.00 +5.00
++0.30 +0.30 +0.35 +0.45 +0.45 +0.25 +0.25 +0.25
++0.20 +0.20 +0.25 +0.35 +0.35 +0.10 +0.10 +0.15
++0.15 +0.15 +0.20 +0.30 +0.30 +0.05 +0.00 +0.10
++0.05 +0.05 +0.15 +0.25 +0.25 +0.00 +0.00 +0.05
++0.00 +0.00 +0.05 +0.15 +0.15 -0.15 +0.10 +0.10
+-0.05 -0.05 -0.05 -0.35 -0.35 +0.10 +0.10 +0.05
++0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00
+
+Endgame:
++5.00 +5.00 +5.00 +5.00 +5.00 +5.00 +5.00 +5.00
++0.55 +0.55 +0.40 +0.40 +0.40 +0.40 +0.55 +0.55
++0.30 +0.30 +0.20 +0.20 +0.20 +0.20 +0.30 +0.30
++0.20 +0.20 +0.10 +0.10 +0.10 +0.10 +0.20 +0.20
++0.10 +0.10 +0.05 +0.05 +0.05 +0.05 +0.10 +0.10
++0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00
+-0.05 -0.05 -0.05 -0.05 -0.05 -0.05 -0.05 -0.05
++0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00
+
+----- bPawn PSTs ----- DONE
+(Standard value of -1) (multiply PST values by -1)
+Opening:
++0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00
++0.00 +0.00 -0.05 -0.25 -0.25 +0.10 +0.05 +0.00
++0.05 +0.05 +0.10 +0.10 +0.10 -0.15 +0.00 +0.05
++0.05 +0.05 +0.20 +0.25 +0.25 -0.05 -0.05 -0.05
++0.10 +0.05 +0.25 +0.30 +0.30 +0.00 -0.05 +0.00
++0.00 +0.05 +0.20 +0.25 +0.25 +0.15 +0.05 +0.00
++0.10 +0.15 +0.30 +0.30 +0.30 +0.25 +0.15 +0.15
++5.00 +5.00 +5.00 +5.00 +5.00 +5.00 +5.00 +5.00
+
+Middle-Game:
++0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00
+-0.05 -0.05 -0.05 -0.35 -0.35 +0.10 +0.10 +0.05
++0.00 +0.00 +0.05 +0.15 +0.15 -0.15 +0.10 +0.10
++0.05 +0.05 +0.15 +0.25 +0.25 +0.00 +0.00 +0.05
++0.15 +0.15 +0.20 +0.30 +0.30 +0.05 +0.00 +0.10
++0.20 +0.20 +0.25 +0.35 +0.35 +0.10 +0.10 +0.15
++0.30 +0.30 +0.35 +0.45 +0.45 +0.25 +0.25 +0.25
++5.00 +5.00 +5.00 +5.00 +5.00 +5.00 +5.00 +5.00
+
+Endgame:
++0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00
+-0.05 -0.05 -0.05 -0.05 -0.05 -0.05 -0.05 -0.05
++0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00 +0.00
++0.10 +0.10 +0.05 +0.05 +0.05 +0.05 +0.10 +0.10
++0.20 +0.20 +0.10 +0.10 +0.10 +0.10 +0.20 +0.20
++0.30 +0.30 +0.20 +0.20 +0.20 +0.20 +0.30 +0.30
++0.55 +0.55 +0.40 +0.40 +0.40 +0.40 +0.55 +0.55
++5.00 +5.00 +5.00 +5.00 +5.00 +5.00 +5.00 +5.00
+
+----- wKing PSTs ----- DONE
+(Standard value of +1000)
+Opening:
+-8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00
+-8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00
+-5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00
+-5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00
+-1.50 -1.55 -1.60 -1.70 -1.70 -1.60 -1.55 -1.50
+-0.25 -0.30 -0.35 -0.45 -0.45 -0.35 -0.30 -0.25
++0.00 +0.00 -0.10 -0.30 -0.30 -0.15 -0.10 +0.00
++0.15 +0.35 +0.25 -0.25 -0.05 -0.15 +0.35 +0.20
+
+Middle-Game:
+-8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00
+-8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00
+-5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00
+-5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00
+-1.50 -1.55 -1.60 -1.70 -1.70 -1.60 -1.55 -1.50
+-0.15 -0.25 -0.55 -0.80 -0.80 -0.55 -0.25 -0.15
++0.15 +0.15 -0.15 -0.65 -0.65 -0.15 +0.15 +0.15
++0.30 +0.40 +0.15 -0.55 -0.55 +0.00 +0.40 +0.35
+
+Endgame:
+-1.00 -0.65 -0.30 +0.00 +0.00 -0.30 -0.65 -1.00
+-0.65 -0.30 +0.00 +0.10 +0.10 +0.00 -0.30 -0.65
+-0.30 +0.00 +0.10 +0.25 +0.25 +0.10 +0.00 -0.30
++0.00 +0.10 +0.25 +0.35 +0.35 +0.25 +0.10 +0.00
++0.00 +0.10 +0.25 +0.35 +0.35 +0.25 +0.10 +0.00
+-0.30 +0.00 +0.10 +0.25 +0.25 +0.10 +0.00 -0.30
+-0.65 -0.30 +0.00 +0.10 +0.10 +0.00 -0.30 -0.65
+-1.00 -0.65 -0.30 +0.00 +0.00 -0.30 -0.65 -1.00
+
+----- bKing PSTs ----- DONE
+(Standard value of -1000) (multiply PST values by -1)
+Opening:
++0.15 +0.35 +0.25 -0.25 -0.05 -0.15 +0.35 +0.20
++0.00 +0.00 -0.10 -0.30 -0.30 -0.15 -0.10 +0.00
+-0.25 -0.30 -0.35 -0.45 -0.45 -0.35 -0.30 -0.25
+-1.50 -1.55 -1.60 -1.70 -1.70 -1.60 -1.55 -1.50
+-5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00
+-5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00
+-8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00
+-8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00
+
+Middle-Game:
++0.30 +0.40 +0.15 -0.55 -0.55 +0.00 +0.40 +0.35
++0.15 +0.15 -0.15 -0.65 -0.65 -0.15 +0.15 +0.15
+-0.15 -0.25 -0.55 -0.80 -0.80 -0.55 -0.25 -0.15
+-1.50 -1.55 -1.60 -1.70 -1.70 -1.60 -1.55 -1.50
+-5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00
+-5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00 -5.00
+-8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00
+-8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00 -8.00
+
+Endgame:
+-1.00 -0.65 -0.30 +0.00 +0.00 -0.30 -0.65 -1.00
+-0.65 -0.30 +0.00 +0.10 +0.10 +0.00 -0.30 -0.65
+-0.30 +0.00 +0.10 +0.25 +0.25 +0.10 +0.00 -0.30
++0.00 +0.10 +0.25 +0.35 +0.35 +0.25 +0.10 +0.00
++0.00 +0.10 +0.25 +0.35 +0.35 +0.25 +0.10 +0.00
+-0.30 +0.00 +0.10 +0.25 +0.25 +0.10 +0.00 -0.30
+-0.65 -0.30 +0.00 +0.10 +0.10 +0.00 -0.30 -0.65
+-1.00 -0.65 -0.30 +0.00 +0.00 -0.30 -0.65 -1.00
+
+    # Return a list of hashed children boards
+    def GetChildren(self, bHistory, K1, K2, K3, coMoves, pcoMoves):
+        Children = []
+        hashedBoard = HashBoard(self)
+        testB = Board(DeHashBoard(hashedBoard), self.turn, self.castlingRights, bHistory, False)
+        holdTurn = self.turn
+        # Sort the moves, right now only sorts captures to top and killer moves, put pawn moves at back
+        moves = self.moves
+        i = 0
+        for j in range(len(moves)):
+            if moves[j] == K1:
+                moves[i], moves[j] = moves[j], moves[i]
                 i += 1
-        #Check for 3fold, check for 50move
-
-        #List compression, remove all the 0s
-        moves = [i for i in moves if i != 0]
-        print("OUT: Generate Moves")
-        return moves
-
-    # Check if the king is in check
-    def isKingInCheck(self, move, bHistory):
-        testB = copy.deepcopy(self)
-        testB.updateBoard(move, bHistory, False)
-        nextMoves = testB.generateMoves(bHistory, True, True)
-        holdTestB = copy.deepcopy(testB)
-        for nmove in nextMoves:
-            testB = copy.deepcopy(holdTestB)
-            testB.updateBoard(nmove, bHistory, False)
-            # testB.PrintBoard()
-            if not (500 > testB.getEval() > -500):
-                return 0
-        del testB
-        del holdTestB
-        return move
-
-    # Method used in seeing if the king is in check, all it does is create a moves list variable
-    # This avoids recursion errors
-    def touchMoves(self):
-        self.moves = []
-
-    # Method to update the board
-    def updateBoard(self, move, bHistory, generateMoves):
-        print("IN: Update Board")
-        #Add the previous board to board history
-        if generateMoves:
-            bHistory.append(copy.deepcopy(self))
-
-        #Get the current material
-        currentMaterial = self.getMaterial()
-        nRow = 0 # Needed for references
-        nCol = 0 # Needed for references
-
-        #If it's a special move
-        if move == 8880:  # White, Short Castle
-            self.board[0][6] = self.board[0][4]
-            self.board[0][5] = self.board[0][7]
-            self.board[0][4] = Empty()
-            self.board[0][7] = Empty()
-            self.fiftyMoves = 0
-        elif move == 8881:  # White, Long Castle
-            self.board[0][2] = self.board[0][4]
-            self.board[0][3] = self.board[0][0]
-            self.board[0][4] = Empty()
-            self.board[0][0] = Empty()
-            self.fiftyMoves = 0
-        elif move == 9990:  # Black, Short Castle
-            self.board[7][6] = self.board[7][4]
-            self.board[7][5] = self.board[7][7]
-            self.board[7][4] = Empty()
-            self.board[7][7] = Empty()
-            self.fiftyMoves = 0
-        elif move == 9991:  # Black, Long Castle
-            self.board[7][2] = self.board[7][4]
-            self.board[7][3] = self.board[7][0]
-            self.board[7][4] = Empty()
-            self.board[7][0] = Empty()
-            self.fiftyMoves = 0
-        else:
-            #Parse out the move input
-            sRow = move % 10
-            move //= 10
-            sCol = move % 10
-            move //= 10
-            nRow = move % 10
-            move //= 10
-            nCol = move
-            #Check for 50 move incrementation
-            if self.board[sRow][sCol].material == 1 or self.board[sRow][sCol].material == -1:
-                self.fiftyMoves = 0
-            #Now check for enpassent
-            if sCol != nCol and (self.board[sRow][sCol].material == 1 or self.board[sRow][sCol].material == -1):
-                if self.board[sRow][sCol].material == 1 and self.board[nRow][nCol].material == 0:  # White
-                    self.board[nRow-1][nCol] = Empty()
-                if self.board[sRow][sCol].material == -1 and self.board[nRow][nCol].material == 0:  # Black
-                    self.board[nRow+1][nCol] = Empty()
-            #Make the move
-            self.board[nRow][nCol] = self.board[sRow][sCol]
-            self.board[sRow][sCol] = Empty()
-
-        #If material is different, then reset 50 moves
-        if self.getMaterial() != currentMaterial:
-            self.fiftyMoves = 0
-
-        #Set turn to opposite of current turn
-        if self.turn == 'white':
-            self.turn = 'black'
-        else:
-            self.turn = 'white'
-
-        #Update castling rights
-        if self.board[0][4].char != 'K':
-            self.castlingRights[0] = 0
-            self.castlingRights[1] = 0
-        if self.board[0][0].char != 'R':
-            self.castlingRights[1] = 0
-        if self.board[0][7].char != 'R':
-            self.castlingRights[0] = 0
-        if self.board[7][4].char != 'k':
-            self.castlingRights[2] = 0
-            self.castlingRights[3] = 0
-        if self.board[7][0].char != 'r':
-            self.castlingRights[3] = 0
-        if self.board[7][7].char != 'r':
-            self.castlingRights[2] = 0
-
-        #Clear all the moves, and generate the next moves
-        self.moves.clear()
-        if generateMoves:
-            self.moves = self.generateMoves(bHistory, False, False)
-
-        #Check for 50 moves
-        if self.fiftyMoves >= 50:
-            self.moves.clear()
-
-        #Check for 3-Fold repetition
-        if len(bHistory) > 3:
-            matches = 1
-            for i in range(len(bHistory)):
-                matches += Board.CompareBoards(bHistory[i].GetBoard(), self.board)
-            if matches == 3:
-                self.moves.clear()
-
-        # Check for promotion
-        for i in range(8):
-            if self.board[7][i].material == 1:  # White
-                # Promotion
-                piece = self.wPromote()
-                if piece == "Q":
-                    self.board[nRow][nCol] = wQueen()
-                if piece == "R":
-                    self.board[nRow][nCol] = wRook()
-                if piece == "B":
-                    self.board[nRow][nCol] = wBishop()
-                if piece == "N":
-                    self.board[nRow][nCol] = wKnight()
-                break
-            if self.board[0][i].material == -1:  # Black
-                # Promotion
-                piece = self.bPromote()
-                if piece == "q":
-                    self.board[nRow][nCol] = bQueen()
-                if piece == "r":
-                    self.board[nRow][nCol] = bRook()
-                if piece == "b":
-                    self.board[nRow][nCol] = bBishop()
-                if piece == "n":
-                    self.board[nRow][nCol] = bKnight()
-                break
-
-        print("OUT: Update Board")
-
-        # Increment 50 moves
-        self.fiftyMoves += 1
-
-    # White promotion
-    def wPromote(self):
-        uIn = input("[WHITE] Pawn Promotion (Q, R, B, N): ")
-        if uIn == "Q" or uIn == "R" or uIn == "B" or uIn == "N":
-            return uIn
-        print("Not a valid piece.")
-        return self.wPromote()
-
-    # Black promotion
-    def bPromote(self):
-        uIn = input("[BLACK] Pawn Promotion (q, r, b, n): ")
-        if uIn == "q" or uIn == "r" or uIn == "b" or uIn == "n":
-            return uIn
-        print("Not a valid piece.")
-        return self.bPromote()
-
-    # Tests if two boards are equal, returns 0 if they are not and 1 if they are
-    def CompareBoards(BoardOne, BoardTwo):
-        row = 0
-        while row <= 7:
-            col = 0
-            while col <= 7:
-                if not (BoardOne[row][col].char == BoardTwo[row][col].char):
-                    return 0
-                col += 1
-            row += 1
-        return 1
----------------------------------------
-BACKUP KingIsInCheck
-def isKingInCheck(self, testB, move, bHistory):
-        testB.updateBoard(move, bHistory, False, False)
-        nextMoves = testB.generateMoves(bHistory, True)
-        hashedBoard = HashBoard(testB)  # Created a saved hashed board
-        holdTurn = testB.turn
-        for nmove in nextMoves:
+                continue
+            if moves[j] == K2:
+                moves[i], moves[j] = moves[j], moves[i]
+                i += 1
+                continue
+            if moves[j] == K3:
+                moves[i], moves[j] = moves[j], moves[i]
+                i += 1
+                continue
+            tmove = moves[j] // 100
+            trow = tmove % 10
+            tmove //= 10
+            tcol = tmove
+            if not (0 <= tcol <= 7 and 0 <= trow <= 7):
+                continue
+            if self.turn == 'white' and self.board[trow][tcol].material < 0:
+                moves[i], moves[j] = moves[j], moves[i]
+                i += 1
+            elif self.turn == 'black' and self.board[trow][tcol].material > 0:
+                moves[i], moves[j] = moves[j], moves[i]
+                i += 1
+        # For non-captures and non-killers, order by cutoffs if possible
+        ogi = i  # Hold original i value
+        for k in range(i, len(moves)):
+            if not moves[k] in coMoves:
+                continue
+            moves[i], moves[k] = moves[k], moves[i]
+            for j in range(i, ogi, -1):  # Order moves by cutoff value
+                if coMoves[moves[j]] > coMoves[moves[j-1]]:
+                    moves[j-1], moves[j] = moves[j], moves[j-1]
+                else:
+                    break
+            i += 1
+        ogi = i  # Hold original i value
+        # Order by previous cutoffs
+        for k in range(i, len(moves)):
+            if not moves[k] in pcoMoves:
+                continue
+            moves[i], moves[k] = moves[k], moves[i]
+            for j in range(i, ogi, -1):  # Order moves by pcutoff value
+                if pcoMoves[moves[j]] > pcoMoves[moves[j-1]]:
+                    moves[j-1], moves[j] = moves[j], moves[j-1]
+                else:
+                    break
+            i += 1
+        # Look at castling next
+        for k in range(i, len(moves)):
+            if moves[k] == 8880 or moves[k] == 8881 or moves[k] == 9990 or moves[k] == 9991:
+                moves[i], moves[k] = moves[k], moves[i]
+                i += 1
+        for move in moves:
             testB.board = DeHashBoard(hashedBoard)  # Reset testB
-            testB.turn = holdTurn  # Set this copy to the opponent
-            testB.updateBoard(nmove, bHistory, False, False)
-            # testB.PrintBoard()
-            if not (500 > testB.material > -500):
-                return 0
-        return move
-------------------------
-BACKUP
-for row in range(8):
-            for col in range(8):
-                #Make sure it is current players turn
-                if (self.turn == 'white' and self.board[row][col].material < 0) or (self.turn == 'black' and self.board[row][col].material > 0) or self.board[row][col].material == 0:
-                    continue
-                moves.extend(self.board[row][col].getMoves(self.board, row, col))
-                #Pawn Enpassant
-                if (self.board[row][col].char == 'P' or self.board[row][col].char == 'p') and len(bHistory) > 0:
-                    moves.extend(self.board[row][col].enpassent(self.board, row, col, len(bHistory), DeHashBoard(bHistory[len(bHistory)-1])))
+            testB.turn = holdTurn
+            testB.updateBoard(move, bHistory, False, False)
+            Children.append([HashBoard(testB), move])
+        return Children
+
+        ---------------
+
+        ---------------
+
+               # For non-captures and non-killers, order by cutoffs if possible
+        ogi = i  # Hold original i value
+        for k in range(i, len(moves)):
+            if not moves[k] in coMoves:
+                continue
+            moves[i], moves[k] = moves[k], moves[i]
+            for j in range(i, ogi, -1):  # Order moves by cutoff value
+                if coMoves[moves[j]] > coMoves[moves[j-1]]:
+                    moves[j-1], moves[j] = moves[j], moves[j-1]
+                else:
+                    break
+            i += 1
+        ogi = i  # Hold original i value
+        # Order by previous cutoffs
+        for k in range(i, len(moves)):
+            if not moves[k] in pcoMoves:
+                continue
+            moves[i], moves[k] = moves[k], moves[i]
+            for j in range(i, ogi, -1):  # Order moves by pcutoff value
+                if pcoMoves[moves[j]] > pcoMoves[moves[j-1]]:
+                    moves[j-1], moves[j] = moves[j], moves[j-1]
+                else:
+                    break
+            i += 1

@@ -16,7 +16,7 @@ class Empty:
         return self.char
 
     #Method to get an isolated eval of this piece
-    def getEval(self, row, col):
+    def getEval(self, row, col, phase_of_game):
         return 0
 
     #Empty function for get moves

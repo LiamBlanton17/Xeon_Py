@@ -35,7 +35,10 @@ class Board:
         #Update material
         # self.setMaterial()
         if genMoves:
-            self.moves = self.generateMoves(boardHistory, False)  # Generate moves from current board
+            self.moves = self.generateMoves(boardHistory, False, False)  # Generate moves from current board
+
+    def testFunction(self, boardHistory):
+        self.generateMoves(boardHistory, False, False)
 
     # Method to get the board
     def GetBoard(self):
@@ -71,7 +74,12 @@ class Board:
                 self.material += self.board[row][col].material
 
     # Method to get evaluation of the board
-    def getEval(self):
+    def getEval(self, move_number):
+        phase_of_game = 'opening'
+        if move_number > 10:
+            phase_of_game = 'middle_game'
+        if self.getNumPieces() <= 12:
+            phase_of_game = 'endgame'
         eval = 0
         # col by row search (to search row by col inverse row and col
         for row in range(8):
@@ -86,7 +94,7 @@ class Board:
             bQueen = 0
             for col in range(8):
                 pieceByFile = self.board[col][row].char  # Get char of piece of current square (inverted)
-                eval += self.board[row][col].getEval(row, col)  # Isolated piece evaluation based on PSTs
+                eval += self.board[row][col].getEval(row, col, phase_of_game)  # Isolated piece evaluation based on PSTs
                 eval += self.board[row][col].material  # Basic material evaluation
                 # Use below if/elifs to get profile of the file (we got piece by inverting row/col)
                 if pieceByFile == '-':
@@ -108,10 +116,10 @@ class Board:
                 elif pieceByFile == 'q':
                     bQueen += 1
             # We have profiled the file, now compute logic
-            if wPawns > 1:  # If doubled white pawns, change eval by -0.25
-                eval += -0.25
-            if bPawns > 1:  # If doubled black pawns, change eval by 0.25
-                eval += 0.25
+            if wPawns > 1:  # If doubled white pawns, change eval by -0.35
+                eval += -0.35
+            if bPawns > 1:  # If doubled black pawns, change eval by 0.35
+                eval += 0.35
             if wPawns + bPawns == 0:  # If the file is open (no pawns)
                 eval += (wRooks - bRooks) * 0.35  # Every unmatched rook on open file is change of 0.35
                 if bKing == 1 and wRooks > 0:  # If white rooks on open file and bKing, massive bonus to white
@@ -133,20 +141,19 @@ class Board:
                 if wQueen == 1 and bRooks > 0:  # If black rooks on semi-open file and wQueen, strong bonus to black
                     eval += -0.15
 
-        # Loop through central 16 squares, count pawns, give +/- 0.15 for difference, 1.5 per pawn in center 4
+        # Loop through central 16 squares, count pawns, give +/- 0.18 for difference, 1.65 per pawn in center 4
         centerPawns = 0
-        for row in range(2,6):
-            for col in range(2,6):
+        for row in range(2, 6):
+            for col in range(2, 6):
                 if self.board[row][col].char == 'P':
                     centerPawns += 1
                     if 2 < row < 6 and 2 < col < 6:
-                        centerPawns += 0.5
+                        centerPawns += 0.65
                 if self.board[row][col].char == 'p':
                     centerPawns -= 1
                     if 2 < row < 6 and 2 < col < 6:
-                        centerPawns -= 0.5
-        eval += centerPawns * 0.15
-
+                        centerPawns -= 0.65
+        eval += centerPawns * 0.18
         # Some more eval ideas
         # Pieces of both colors around both kings
         # Slight penalty for undefended minor pieces
@@ -156,8 +163,9 @@ class Board:
         return eval
 
     # Method to generate move, children board pairs
-    def generateMoves(self, bHistory, killCastleCheck):
+    def generateMoves(self, bHistory, killCastleCheck, onlyCaptures):
         moves = []
+
         #Loop over each piece in the board
         for row in range(8):
             for col in range(8):
@@ -169,6 +177,26 @@ class Board:
                 #Pawn Enpassant
                 if (piece.char == 'P' or self.board[row][col].char == 'p') and len(bHistory) > 0 and (row == 3 or row == 4):
                     moves.extend(piece.enpassent(self.board, row, col, len(bHistory), DeHashBoard(bHistory[len(bHistory)-1])))
+
+        #Only keep captures if wanted
+        if onlyCaptures:
+            w = 0
+            for move in moves:
+                tmove = move // 100
+                trow = tmove % 10
+                tmove //= 10
+                tcol = tmove
+                if not (0 <= tcol <= 7 and 0 <= trow <= 7):
+                    continue
+                if self.turn == 'white' and self.board[trow][tcol].material < 0:
+                    continue
+                elif self.turn == 'black' and self.board[trow][tcol].material > 0:
+                    continue
+                else:
+                    moves[w] = 0
+                w += 1
+            moves = [i for i in moves if i != 0]
+
         #Check for castling
         if not killCastleCheck:
             # Create a testB with deep copys of the original board position, hash the current board
@@ -177,7 +205,7 @@ class Board:
             if self.turn == 'white' and ((self.castlingRights[0] == '1' and self.board[0][5].material == 0 and self.board[0][6].material == 0) or (self.castlingRights[1] == '1' and self.board[0][3].material == 0 and self.board[0][2].material == 0 and self.board[0][1].material == 0)):
                 # Test is opponent checks the king or attacks the squares
                 testB.turn = 'black'  # Set this copy to the opponent
-                opponentMoves = testB.generateMoves(bHistory, True)  # See where opponents pieces can move it
+                opponentMoves = testB.generateMoves(bHistory, True, False)  # See where opponents pieces can move it
                 #Loop through and parse out the moves to only get the target square
                 #Determine if the king will move through check
                 kingSideIllegal = False
@@ -202,7 +230,7 @@ class Board:
                 #Below should check to see if the king is in or moving through check
                 testB.board = DeHashBoard(hashedBoard)  # Reset testB
                 testB.turn = 'white'  # Set this copy to the opponent
-                opponentMoves = testB.generateMoves(bHistory, True)  # See where opponents pieces can move it
+                opponentMoves = testB.generateMoves(bHistory, True, False)  # See where opponents pieces can move it
                 #Loop through and parse out the moves to only get the target square
                 #Determine if the king will move through check
                 kingSideIllegal = False
@@ -230,8 +258,8 @@ class Board:
                 testB.board = DeHashBoard(hashedBoard)  # Reset testB
                 testB.turn = self.turn
                 testB.updateBoard(move, bHistory, False, False)
-                nextMoves = testB.generateMoves(bHistory, True)
-                moves[i] = self.isKingInCheck(testB, move, nextMoves, bHistory)
+                nextMoves = testB.generateMoves(bHistory, True, False)
+                moves[i] = self.isKingInCheck(testB, move, nextMoves)
                 i += 1
 
             #List compression, remove all the 0s
@@ -240,7 +268,7 @@ class Board:
         return moves
 
     # Check if the king is in check
-    def isKingInCheck(self, testB, move, nextMoves, bHistory):
+    def isKingInCheck(self, testB, move, nextMoves):
         for nmove in nextMoves:
             nmove //= 100
             row = nmove % 10
@@ -346,7 +374,7 @@ class Board:
         #Clear all the moves, and generate the next moves
         self.moves.clear()
         if generateMoves:
-            self.moves = self.generateMoves(bHistory, False)
+            self.moves = self.generateMoves(bHistory, False, False)
 
         #Check for 50 moves
         if self.fiftyMoves >= 50:
@@ -420,35 +448,67 @@ class Board:
         return 1
 
     # Return a list of hashed children boards
-    def GetChildren(self, bHistory):
+    def GetChildren(self, bHistory, K1, K2, K3, coMoves, pcoMoves, capture_depth):
+        cutoff_moves = coMoves | pcoMoves
         Children = []
         hashedBoard = HashBoard(self)
         testB = Board(DeHashBoard(hashedBoard), self.turn, self.castlingRights, bHistory, False)
         holdTurn = self.turn
-        # Sort the moves, right now only sorts captures to top
+        # Sort the moves, right now only sorts captures to top and killer moves, put pawn moves at back
         moves = self.moves
-        i = 0
-        for j in range(len(moves)):
-            tmove = moves[j] // 100
-            row = tmove % 10
-            tmove //= 10
-            col = tmove
-            if not (0 <= col <= 7 and 0 <= row <= 7):
-                continue
-            if self.turn == 'white' and self.board[row][col].material < 0:
-                moves[i], moves[j] = moves[j], moves[i]
-                i += 1
-            elif self.turn == 'black' and self.board[row][col].material > 0:
-                moves[i], moves[j] = moves[j], moves[i]
-                i += 1
+        if capture_depth == 0:
+            i = 0
+            for j in range(len(moves)):
+                if moves[j] == K1:
+                    moves[i], moves[j] = moves[j], moves[i]
+                    i += 1
+                    continue
+                if moves[j] == K2:
+                    moves[i], moves[j] = moves[j], moves[i]
+                    i += 1
+                    continue
+                if moves[j] == K3:
+                    moves[i], moves[j] = moves[j], moves[i]
+                    i += 1
+                    continue
+                tmove = moves[j] // 100
+                trow = tmove % 10
+                tmove //= 10
+                tcol = tmove
+                if not (0 <= tcol <= 7 and 0 <= trow <= 7):
+                    continue
+                if self.turn == 'white' and self.board[trow][tcol].material < 0:
+                    moves[i], moves[j] = moves[j], moves[i]
+                    i += 1
+                elif self.turn == 'black' and self.board[trow][tcol].material > 0:
+                    moves[i], moves[j] = moves[j], moves[i]
+                    i += 1
+            # For non-captures and non-killers, order by cutoffs if possible
+            ogi = i  # Hold original i value
+            for k in range(i, len(moves)):
+                if moves[k] in cutoff_moves:
+                    moves[i], moves[k] = moves[k], moves[i]
+                    for j in range(i, ogi, -1):  # Order moves by cutoff value
+                        if cutoff_moves[moves[j]] > cutoff_moves[moves[j-1]]:
+                            moves[j-1], moves[j] = moves[j], moves[j-1]
+                        else:
+                            break
+                    i += 1
+                    continue
+            # Look at castling next
+            for k in range(i, len(moves)):
+                if moves[k] == 8880 or moves[k] == 8881 or moves[k] == 9990 or moves[k] == 9991:
+                    moves[i], moves[k] = moves[k], moves[i]
+                    i += 1
         for move in moves:
             testB.board = DeHashBoard(hashedBoard)  # Reset testB
             testB.turn = holdTurn
             testB.updateBoard(move, bHistory, False, False)
-            Children.append(HashBoard(testB))
+            Children.append([HashBoard(testB), move])
         return Children
 
     # Return a list of hashed children boards, plus the resulting move
+    # Old get children method, not in use anymore
     def GetMainChildren(self, bHistory):
         Children = []
         hashedBoard = HashBoard(self)
@@ -459,13 +519,15 @@ class Board:
         i = 0
         for j in range(len(moves)):
             tmove = moves[j] // 100
-            row = tmove % 10
+            trow = tmove % 10
             tmove //= 10
-            col = tmove
-            if self.turn == 'white' and self.board[row][col].material < 0:
+            tcol = tmove
+            if not (0 <= tcol <= 7 and 0 <= trow <= 7):
+                continue
+            if self.turn == 'white' and self.board[trow][tcol].material < 0:
                 moves[i], moves[j] = moves[j], moves[i]
                 i += 1
-            elif self.turn == 'black' and self.board[row][col].material > 0:
+            elif self.turn == 'black' and self.board[trow][tcol].material > 0:
                 moves[i], moves[j] = moves[j], moves[i]
                 i += 1
         for move in moves:
